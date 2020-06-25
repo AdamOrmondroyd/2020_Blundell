@@ -1,4 +1,28 @@
+import numpy as np
 import pandas as pd
+
+AGES = np.array([0, 7, 17, 24])
+age_lane_map = {0: "lane1", 7: "lane2", 17: "lane3", 24: "lane4"}
+
+CHANGES = np.array(
+    [
+        "TA",
+        "TC",
+        "TG",
+        "AC",
+        "AG",
+        "AT",
+        "CA",
+        "CG",
+        "CT",
+        "AC",
+        "AG",
+        "AT",
+        "AC",
+        "AG",
+        "AT",
+    ]
+)
 
 id_df = pd.read_csv(
     "data_files\\id.txt",
@@ -9,13 +33,12 @@ id_df = pd.read_csv(
 )
 
 
-def lookup(id, lane, chromosome, position, change):
+def lookup_frequency(id, lane, chromosome, position, change):
     """
     Looks up a given person, age (given by lane) and transition (e.g. AC)
     "lane1" = age0, "lane2" = age7, "lane3" = age17, "lane4" = age24
     """
     sample_id = id_df.at[id, lane][:14]
-    print("Sample ID: " + str(sample_id))
 
     chunksize = 10 ** 6  # number of rows per chunk
 
@@ -44,8 +67,3 @@ def lookup(id, lane, chromosome, position, change):
         if a:
             return a[0]
     return
-
-
-print(
-    lookup(id="als5", lane="lane4", chromosome="chr1", position=36931698, change="TA")
-)
