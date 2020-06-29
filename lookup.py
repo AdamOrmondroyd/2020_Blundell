@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+CHUNKSIZE = 10 ** 6  # number of rows per chunk
+
 AGES = np.array([0, 7, 17, 24])
 LANES = np.array(["lane1", "lane2", "lane3", "lane4"])
 age_lane_map = {0: "lane1", 7: "lane2", 17: "lane3", 24: "lane4"}
@@ -15,6 +17,15 @@ change_map = {
 CHANGES = np.array(
     ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
 )
+
+column_names = [
+    "chromosome",
+    "position",
+    "change",
+    "frequency",
+    "num consensus molecules",
+    "sample ID",
+]
 
 
 def id_age_map(sample_id):
@@ -44,33 +55,58 @@ def lookup(person, lanes, chromosome, position, changes):
         sample_ids[i] = id_df.at[person, lanes[i]][:14]
 
     print(sample_ids)
-    chunksize = 10 ** 6  # number of rows per chunk
-    column_names = [
-        "chromosome",
-        "position",
-        "change",
-        "frequency",
-        "num consensus molecules",
-        "sample ID",
-    ]
+
     # Empty dataframe
     df = pd.DataFrame(columns=column_names)
 
     for chunk in pd.read_csv(
         "data_files\\full_data.txt",
-        chunksize=chunksize,
+        chunksize=CHUNKSIZE,
         header=None,
         names=column_names,
         sep="\t",
     ):
 
-        df_chunk = chunk.loc[
+        chunk = chunk.loc[
             (chunk["sample ID"].isin(sample_ids))
             & (chunk["change"].isin(changes))
             & (chunk["position"] == position)
             & (chunk["chromosome"] == chromosome)
         ]
-        print(df_chunk)
-        df = df.append(df_chunk, ignore_index=True)
+        print(chunk)
+        df = df.append(chunk, ignore_index=True)
 
     return df
+
+
+def figuring_out_the_data():
+    start_position = 0
+    current_position = 0
+    current_chr = ""
+    counter = 0
+    for chunk in pd.read_csv(
+        "data_files\\full_data.txt",
+        chunksize=CHUNKSIZE,
+        header=None,
+        names=column_names,
+        sep="\t",
+    ):
+        for i in np.arange(len(chunk)) + counter * CHUNKSIZE:
+            chromosome = chunk.at[i, "chromosome"]
+            position = chunk.at[i, "position"]
+            if chromosome != current_chr or (
+                position != current_position and position != (current_position + 1)
+            ):
+                print(
+                    "{}: {} to {}".format(current_chr, start_position, current_position)
+                )
+
+                current_chr = chromosome
+                start_position = position
+                current_position = start_position
+            elif position == current_position + 1:
+                current_position += 1
+        print("new chonker: {}, position = {}".format(current_chr, current_position))
+        counter += 1
+    print("{}: {} to {}".format(current_chr, start_position, current_position))
+    return
