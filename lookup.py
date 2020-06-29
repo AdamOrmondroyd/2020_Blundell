@@ -5,10 +5,21 @@ AGES = np.array([0, 7, 17, 24])
 LANES = np.array(["lane1", "lane2", "lane3", "lane4"])
 age_lane_map = {0: "lane1", 7: "lane2", 17: "lane3", 24: "lane4"}
 lane_age_map = {"lane1": 0, "lane2": 7, "lane3": 17, "lane4": 24}
+change_map = {
+    "A": np.array(["AC", "AG", "AT"]),
+    "C": np.array(["CA", "CG", "CT"]),
+    "G": np.array(["GA", "GC", "GT"]),
+    "T": np.array(["TA", "TC", "TG"]),
+}
 
 CHANGES = np.array(
-    ["TA", "TC", "TG", "AC", "AG", "AT", "CA", "CG", "CT", "AC", "AG", "AT",]
+    ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
 )
+
+
+def id_age_map(sample_id):
+    return lane_age_map[sample_id[:5]]
+
 
 id_df = pd.read_csv(
     "data_files\\id.txt",
