@@ -18,11 +18,15 @@ CHANGES = np.array(
     ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
 )
 
+a = np.full(30, "als", dtype="U3")
+b = np.arange(1, 31).astype(dtype="U2")
+PEOPLE = np.char.add(a, b)
+
 column_names = [
     "chromosome",
     "position",
     "change",
-    "frequency",
+    "num changes",
     "num consensus molecules",
     "sample ID",
 ]
@@ -40,21 +44,26 @@ id_df = pd.read_csv(
     index_col=-1,
 )
 
+seq_df = pd.read_csv(
+    "data_files\\sequences.txt",
+    header=None,
+    names=["chromosome", "start", "end"],
+    sep=";",
+)
 
-def lookup(person, lanes, chromosome, position, changes):
+
+def lookup(chromosome, position, people=PEOPLE, lanes=LANES):
     """
-    Looks up a given person, ages (given by lanes) and transitions (e.g. AC).
+    Looks up a given people, ages (given by lanes) and transitions (e.g. AC).
     "lane1" = age0, "lane2" = age7, "lane3" = age17, "lane4" = age24
     """
     sample_ids = np.zeros(
-        lanes.size, dtype="U14"
+        (people.size, lanes.size), dtype="U14"
     )  # string length 14, keep an eye on this
 
-    for i in range(lanes.size):
-        print(id_df.at[person, lanes[i]][:14])
-        sample_ids[i] = id_df.at[person, lanes[i]][:14]
-
-    print(sample_ids)
+    for j in range(people.size):
+        for i in range(lanes.size):
+            sample_ids[j, i] = id_df.at[people[j], lanes[i]][:14]
 
     # Empty dataframe
     df = pd.DataFrame(columns=column_names)
@@ -68,8 +77,7 @@ def lookup(person, lanes, chromosome, position, changes):
     ):
 
         chunk = chunk.loc[
-            (chunk["sample ID"].isin(sample_ids))
-            & (chunk["change"].isin(changes))
+            (np.any(np.in1d(sample_ids, chunk["sample ID"])))
             & (chunk["position"] == position)
             & (chunk["chromosome"] == chromosome)
         ]

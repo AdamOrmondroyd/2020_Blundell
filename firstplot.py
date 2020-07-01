@@ -3,7 +3,18 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from lookup import lookup, AGES, CHANGES, LANES, age_lane_map, change_map, id_age_map
+from lookup import (
+    lookup,
+    AGES,
+    CHANGES,
+    LANES,
+    PEOPLE,
+    age_lane_map,
+    change_map,
+    id_age_map,
+)
+
+print(PEOPLE[5])
 
 fig, ax = plt.subplots()
 
@@ -26,7 +37,7 @@ mutation_frequencies = np.zeros(AGES.size)
 # ax.set_xticks(AGES)
 # ax.legend()
 
-df = lookup(person, LANES, chromosome, position, CHANGES)
+df = lookup(PEOPLE[5], LANES, chromosome, position, CHANGES)
 print(df)
 df["relative frequency"] = df["frequency"] / df["num consensus molecules"]
 print(df)
