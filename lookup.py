@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-CHUNKSIZE = 10 ** 6  # number of rows per chunk
+CHUNKSIZE = 10 ** 7  # number of rows per chunk
 
 AGES = np.array([0, 7, 17, 24])
 LANES = np.array(["lane1", "lane2", "lane3", "lane4"])
@@ -52,7 +52,7 @@ seq_df = pd.read_csv(
 )
 
 
-def lookup(chromosome, position, people=PEOPLE, lanes=LANES):
+def lookup(chromosome, positions, people=PEOPLE, lanes=LANES):
     """
     Looks up a given people, ages (given by lanes) and transitions (e.g. AC).
     "lane1" = age0, "lane2" = age7, "lane3" = age17, "lane4" = age24
@@ -77,8 +77,8 @@ def lookup(chromosome, position, people=PEOPLE, lanes=LANES):
     ):
 
         chunk = chunk.loc[
-            (np.any(np.in1d(sample_ids, chunk["sample ID"])))
-            & (chunk["position"] == position)
+            np.any(np.in1d(sample_ids, chunk["sample ID"]))
+            & np.isin(chunk["position"], positions)
             & (chunk["chromosome"] == chromosome)
         ]
         print(chunk)
