@@ -7,16 +7,29 @@ AGES = np.array([0, 7, 17, 24])
 LANES = np.array(["lane1", "lane2", "lane3", "lane4"])
 age_lane_map = {0: "lane1", 7: "lane2", 17: "lane3", 24: "lane4"}
 lane_age_map = {"lane1": 0, "lane2": 7, "lane3": 17, "lane4": 24}
-change_map = {
-    "A": np.array(["AC", "AG", "AT"]),
-    "C": np.array(["CA", "CG", "CT"]),
-    "G": np.array(["GA", "GC", "GT"]),
-    "T": np.array(["TA", "TC", "TG"]),
-}
-
 CHANGES = np.array(
     ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
 )
+base_change_map = {
+    "A": CHANGES[:3],
+    "C": CHANGES[3:6],
+    "G": CHANGES[6:9],
+    "T": CHANGES[9:12],
+}
+change_color_map = {
+    "AC": "lightcoral",
+    "AG": "red",
+    "AT": "darkred",
+    "CA": "lightgreen",
+    "CG": "lime",
+    "CT": "darkgreen",
+    "GA": "deeppink",
+    "GC": "magenta",
+    "GT": "darkmagenta",
+    "TA": "lightgrey",
+    "TC": "grey",
+    "TG": "black",
+}
 
 a = np.full(30, "als", dtype="U3")
 b = np.arange(1, 31).astype(dtype="U2")
@@ -52,37 +65,51 @@ seq_df = pd.read_csv(
 )
 
 
-def lookup(chromosome, positions, people=PEOPLE, lanes=LANES):
+def lookup(chromosome, positions, change=CHANGES, people=PEOPLE, lanes=LANES):
     """
     Looks up a given people, ages (given by lanes) and transitions (e.g. AC).
     "lane1" = age0, "lane2" = age7, "lane3" = age17, "lane4" = age24
     """
     sample_ids = np.zeros(
-        (people.size, lanes.size), dtype="U14"
+        people.size * lanes.size, dtype="U14"
     )  # string length 14, keep an eye on this
 
     for j in range(people.size):
         for i in range(lanes.size):
-            sample_ids[j, i] = id_df.at[people[j], lanes[i]][:14]
+            sample_ids[j * lanes.size + i] = id_df.at[people[j], lanes[i]][:14]
 
     # Empty dataframe
     df = pd.DataFrame(columns=column_names)
 
-    for chunk in pd.read_csv(
+    df = pd.read_csv(
         "data_files\\full_data.txt",
-        chunksize=CHUNKSIZE,
+        # chunksize=CHUNKSIZE,
         header=None,
         names=column_names,
         sep="\t",
-    ):
+    )
+    df = df.loc[
+        np.isin(df["sample ID"], sample_ids)
+        & np.isin(df["position"], positions)
+        & (df["chromosome"] == chromosome)
+        & np.isin(df["change"], change)
+    ]
+    # for chunk in pd.read_csv(
+    #     "data_files\\full_data.txt",
+    #     chunksize=CHUNKSIZE,
+    #     header=None,
+    #     names=column_names,
+    #     sep="\t",
+    # ):
 
-        chunk = chunk.loc[
-            np.any(np.in1d(sample_ids, chunk["sample ID"]))
-            & np.isin(chunk["position"], positions)
-            & (chunk["chromosome"] == chromosome)
-        ]
-        print(chunk)
-        df = df.append(chunk, ignore_index=True)
+    #     chunk = chunk.loc[
+    #         np.isin(chunk["sample ID"], sample_ids)
+    #         & np.isin(chunk["position"], positions)
+    #         & (chunk["chromosome"] == chromosome)
+    #         & np.isin(chunk["change"], change)
+    #     ]
+    #     print(chunk)
+    #     df = df.append(chunk, ignore_index=True)
 
     return df
 
