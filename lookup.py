@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 from constants import CHANGES, LANES, PEOPLE
 
-CHUNKSIZE = 10 ** 7  # number of rows per chunk
-
 column_names = [
     "chromosome",
     "position",
@@ -47,11 +45,7 @@ def lookup(chromosome, positions, change=CHANGES, people=PEOPLE, lanes=LANES):
     df = pd.DataFrame(columns=column_names)
 
     df = pd.read_csv(
-        "data_files\\full_data.txt",
-        # chunksize=CHUNKSIZE,
-        header=None,
-        names=column_names,
-        sep="\t",
+        "data_files\\full_data.txt", header=None, names=column_names, sep="\t",
     )
     df = df.loc[
         np.isin(df["sample ID"], sample_ids)
@@ -59,23 +53,6 @@ def lookup(chromosome, positions, change=CHANGES, people=PEOPLE, lanes=LANES):
         & (df["chromosome"] == chromosome)
         & np.isin(df["change"], change)
     ]
-    # for chunk in pd.read_csv(
-    #     "data_files\\full_data.txt",
-    #     chunksize=CHUNKSIZE,
-    #     header=None,
-    #     names=column_names,
-    #     sep="\t",
-    # ):
-
-    #     chunk = chunk.loc[
-    #         np.isin(chunk["sample ID"], sample_ids)
-    #         & np.isin(chunk["position"], positions)
-    #         & (chunk["chromosome"] == chromosome)
-    #         & np.isin(chunk["change"], change)
-    #     ]
-    #     print(chunk)
-    #     df = df.append(chunk, ignore_index=True)
-
     return df
 
 
@@ -84,29 +61,24 @@ def figuring_out_the_data():
     current_position = 0
     current_chr = ""
     counter = 0
-    for chunk in pd.read_csv(
-        "data_files\\full_data.txt",
-        chunksize=CHUNKSIZE,
-        header=None,
-        names=column_names,
-        sep="\t",
-    ):
-        for i in np.arange(len(chunk)) + counter * CHUNKSIZE:
-            chromosome = chunk.at[i, "chromosome"]
-            position = chunk.at[i, "position"]
-            if chromosome != current_chr or (
-                position != current_position and position != (current_position + 1)
-            ):
-                print(
-                    "{}: {} to {}".format(current_chr, start_position, current_position)
-                )
+    df = pd.read_csv(
+        "data_files\\full_data.txt", header=None, names=column_names, sep="\t",
+    )
+    for i in np.arange(len(df.index)):
+        chromosome = df.at[i, "chromosome"]
+        position = df.at[i, "position"]
+        if chromosome != current_chr or (
+            position != current_position and position != (current_position + 1)
+        ):
+            print("{}: {} to {}".format(current_chr, start_position, current_position))
 
-                current_chr = chromosome
-                start_position = position
-                current_position = start_position
-            elif position == current_position + 1:
-                current_position += 1
-        print("new chonker: {}, position = {}".format(current_chr, current_position))
-        counter += 1
-    print("{}: {} to {}".format(current_chr, start_position, current_position))
+            current_chr = chromosome
+            start_position = position
+            current_position = start_position
+        elif position == current_position + 1:
+            current_position += 1
+    print("{};{};{}".format(current_chr, start_position, current_position))
     return
+
+
+figuring_out_the_data()
