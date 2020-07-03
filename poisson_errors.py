@@ -1,15 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from lookup import (
-    lookup,
+from constants import (
     CHANGES,
     LANES,
     PEOPLE,
     age_lane_map,
     base_change_map,
     change_color_map,
-    seq_df,
 )
+from lookup import lookup, seq_df
 
 # df = lookup(PEOPLE, LANES, seq_df.at[0, "chromosome"], seq_df.at[0, "start"])
 chromosome = "chr1"

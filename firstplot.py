@@ -3,16 +3,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from lookup import (
-    lookup,
-    AGES,
-    CHANGES,
-    LANES,
-    PEOPLE,
-    age_lane_map,
-    change_map,
-    id_age_map,
-)
+from constants import AGES, CHANGES, LANES, PEOPLE, age_lane_map, change_map, id_age_map
+from lookup import lookup
 
 print(PEOPLE[5])
 
