@@ -79,6 +79,3 @@ def figuring_out_the_data():
             current_position += 1
     print("{};{};{}".format(current_chr, start_position, current_position))
     return
-
-
-figuring_out_the_data()

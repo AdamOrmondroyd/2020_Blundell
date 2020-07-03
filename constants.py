@@ -13,6 +13,12 @@ base_change_map = {
     "G": CHANGES[6:9],
     "T": CHANGES[9:12],
 }
+base_color_map = {
+    "A": "red",
+    "C": "lime",
+    "G": "magenta",
+    "T": "black",
+}
 change_color_map = {
     "AC": "lightcoral",
     "AG": "red",
