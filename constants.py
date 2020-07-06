@@ -20,12 +20,12 @@ base_color_map = {
     "T": "black",
 }
 change_color_map = {
-    "AC": "lightcoral",
-    "AG": "red",
-    "AT": "darkred",
-    "CA": "lightgreen",
-    "CG": "lime",
-    "CT": "darkgreen",
+    "AC": "yellow",
+    "AG": "orange",
+    "AT": "red",
+    "CA": "lime",
+    "CG": "cyan",
+    "CT": "blue",
     "GA": "deeppink",
     "GC": "magenta",
     "GT": "darkmagenta",
