@@ -21,18 +21,18 @@ base_color_map = {
     "T": "black",
 }
 change_color_map = {
-    "AC": "yellow",
-    "AG": "orange",
-    "AT": "red",
-    "CA": "lime",
-    "CG": "cyan",
-    "CT": "blue",
-    "GA": "deeppink",
-    "GC": "magenta",
-    "GT": "darkmagenta",
-    "TA": "lightgrey",
-    "TC": "grey",
-    "TG": "black",
+    "AC": "lime",
+    "AG": "blueviolet",
+    "AT": "dodgerblue",
+    "CA": "red",
+    "CG": "blueviolet",
+    "CT": "dodgerblue",
+    "GA": "red",
+    "GC": "lime",
+    "GT": "dodgerblue",
+    "TA": "red",
+    "TC": "lime",
+    "TG": "blueviolet",
 }
 
 a = np.full(30, "als", dtype="U3")
