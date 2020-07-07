@@ -113,5 +113,3 @@ fig2.tight_layout()
 ax2.ticklabel_format(useOffset=False, style="plain")
 ax2.set(yscale="log")
 fig2.savefig("plots\\{}_error_rate_together.png".format(plot_title))
-
-plt.show()
