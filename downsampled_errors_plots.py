@@ -12,19 +12,18 @@ from constants import (
 )
 from lookup import lookup, seq_df
 
-# df = lookup(PEOPLE, LANES, seq_df.at[0, "chromosome"], seq_df.at[0, "start"])
 sequence = 1
 positions = np.arange(seq_df.at[sequence, "start"], seq_df.at[sequence, "end"])
 chromosome = seq_df.at[sequence, "chromosome"]
 
-change_error_rates_map = {}
+change_errors_map = {}
 
-df = lookup(chromosome, positions)
+df = lookup(chromosome, positions, downsample=True)
 
 base_fig_map = {}
 base_axs_map = {}
 fig2, ax2 = plt.subplots(figsize=(10, 7))
-plot_title = "{}_{}-{}".format(chromosome, positions[0], positions[-1])
+plot_title = "{}_{}-{}_(downsampled)".format(chromosome, positions[0], positions[-1])
 
 
 for base in BASES:
@@ -33,19 +32,18 @@ for base in BASES:
         print(change)
         df_change = df.loc[df["change"] == change]
         # df.to_csv("data_files\\spam.csv")
-        error_rates = np.zeros(positions.size)
+        errors = np.zeros(positions.size)
         for i, position in enumerate(positions):
             df_position = df_change.loc[df_change["position"] == position]
             if len(df_position.index) != 0:
                 num_changes = np.sum(df_position["num changes"])
-                total_consensus = np.sum(df_position["num consensus molecules"])
-                error_rates[i] = num_changes / total_consensus
+                errors[i] = num_changes
 
-        change_error_rates_map[change] = error_rates
+        change_errors_map[change] = errors
 
         ax2.plot(
             positions,
-            error_rates,
+            errors,
             label=change,
             linestyle="None",
             marker="+",
@@ -70,7 +68,7 @@ for base in BASES:
                 color = "lightgrey"
             ax.plot(
                 positions,
-                change_error_rates_map[change],
+                change_errors_map[change],
                 label=change,
                 linestyle="None",
                 marker="o",
@@ -78,11 +76,11 @@ for base in BASES:
                 alpha=0.5,
             )
         ax.ticklabel_format(useOffset=False, style="plain")
-        ax.set(xlabel="position", ylabel="error rate", yscale="log")
+        ax.set(xlabel="position", ylabel="downsampled number of errors", yscale="log")
     for change in base_changes_map[base]:
         axs[-1].plot(
             positions,
-            change_error_rates_map[change],
+            change_errors_map[change],
             label=change,
             linestyle="None",
             marker="o",
@@ -90,7 +88,12 @@ for base in BASES:
             alpha=0.5,
         )
     axs[-1].legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
-    axs[-1].set(title=base, xlabel="position", ylabel="error rate", yscale="log")
+    axs[-1].set(
+        title=base,
+        xlabel="position",
+        ylabel="downsampled number of errors",
+        yscale="log",
+    )
 
     for ax in axs:
         axtwin = ax.twinx()

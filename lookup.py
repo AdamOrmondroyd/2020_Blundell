@@ -28,7 +28,17 @@ seq_df = pd.read_csv(
 )
 
 
-def lookup(chromosome, positions, change=CHANGES, people=PEOPLE, lanes=LANES):
+def big_df():
+    df = pd.DataFrame(columns=column_names)
+    df = pd.read_csv(
+        "data_files\\full_data.txt", header=None, names=column_names, sep="\t",
+    )
+    return df
+
+
+def lookup(
+    chromosome, positions, change=CHANGES, people=PEOPLE, lanes=LANES, downsample=False
+):
     """
     Looks up a given people, ages (given by lanes) and transitions (e.g. AC).
     "lane1" = age0, "lane2" = age7, "lane3" = age17, "lane4" = age24
@@ -41,12 +51,11 @@ def lookup(chromosome, positions, change=CHANGES, people=PEOPLE, lanes=LANES):
         for i in range(lanes.size):
             sample_ids[j * lanes.size + i] = id_df.at[people[j], lanes[i]][:14]
 
-    # Empty dataframe
-    df = pd.DataFrame(columns=column_names)
+    if downsample:
+        df = downsample_df()
+    else:
+        df = big_df()
 
-    df = pd.read_csv(
-        "data_files\\full_data.txt", header=None, names=column_names, sep="\t",
-    )
     df = df.loc[
         np.isin(df["sample ID"], sample_ids)
         & np.isin(df["position"], positions)
@@ -79,3 +88,18 @@ def figuring_out_the_data():
             current_position += 1
     print("{};{};{}".format(current_chr, start_position, current_position))
     return
+
+
+def downsample_df():
+    rng = np.random.default_rng()
+    df = big_df()
+    N_0 = np.percentile(df["num consensus molecules"], 0.1)
+    print("N_0 = {}".format(N_0))
+
+    df = df[df["num consensus molecules"] >= N_0]
+    df["num changes"] = rng.binomial(
+        n=N_0, p=df["num changes"] / df["num consensus molecules"]
+    )
+    df.drop(labels="num consensus molecules", axis=1)
+    df.to_csv("data_files\\downsample.txt")
+    return df
