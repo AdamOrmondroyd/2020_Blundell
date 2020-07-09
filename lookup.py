@@ -16,7 +16,6 @@ id_df = pd.read_csv(
     "data_files\\id.txt",
     header=None,
     names=["lane1", "lane2", "lane3", "lane4", "ID"],
-    sep=";",
     index_col=-1,
 )
 
@@ -26,6 +25,7 @@ seq_df = pd.read_csv(
     names=["chromosome", "start", "end"],
     sep=";",
 )
+seq_df["length"] = seq_df["end"] - seq_df["start"] + 1
 
 
 def big_df():
@@ -81,6 +81,7 @@ def lookup(
 
 
 def figuring_out_the_data():
+    seq_df = pd.DataFrame(columns=["chromosome", "start", "end", "length"])
     start_position = 0
     current_position = 0
     current_chr = ""
@@ -88,6 +89,9 @@ def figuring_out_the_data():
     df = pd.read_csv(
         "data_files\\full_data.txt", header=None, names=column_names, sep="\t",
     )
+    start_position = df.at[0, "position"]
+    current_position = start_position
+    current_chr = df.at[0, "chromosome"]
     for i in np.arange(len(df.index)):
         chromosome = df.at[i, "chromosome"]
         position = df.at[i, "position"]
@@ -95,6 +99,15 @@ def figuring_out_the_data():
             position != current_position and position != (current_position + 1)
         ):
             print("{}: {} to {}".format(current_chr, start_position, current_position))
+            seq_df.append(
+                {
+                    "chromosome": current_chr,
+                    "start": start_position,
+                    "end": current_position,
+                    "length": current_position - start_position + 1,
+                },
+                ignore_index=True,
+            )
 
             current_chr = chromosome
             start_position = position
@@ -102,4 +115,17 @@ def figuring_out_the_data():
         elif position == current_position + 1:
             current_position += 1
     print("{};{};{}".format(current_chr, start_position, current_position))
+    seq_df.append(
+        {
+            "chromosome": current_chr,
+            "start": start_position,
+            "end": current_position,
+            "length": current_position - start_position + 1,
+        },
+        ignore_index=True,
+    )
+    seq_df.to_csv("data_files\\sequences2.txt")
     return
+
+
+figuring_out_the_data()
