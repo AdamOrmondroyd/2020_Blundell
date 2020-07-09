@@ -36,6 +36,21 @@ def big_df():
     return df
 
 
+def downsample_df():
+    rng = np.random.default_rng()
+    df = big_df()
+    N_0 = np.percentile(df["num consensus molecules"], 0.1)
+    print("N_0 = {}".format(N_0))
+
+    df = df[df["num consensus molecules"] >= N_0]
+    df["num changes"] = rng.binomial(
+        n=N_0, p=df["num changes"] / df["num consensus molecules"]
+    )
+    df.drop(labels="num consensus molecules", axis=1)
+    df.to_csv("data_files\\downsample.txt")
+    return df
+
+
 def lookup(
     chromosome, positions, change=CHANGES, people=PEOPLE, lanes=LANES, downsample=False
 ):
@@ -88,18 +103,3 @@ def figuring_out_the_data():
             current_position += 1
     print("{};{};{}".format(current_chr, start_position, current_position))
     return
-
-
-def downsample_df():
-    rng = np.random.default_rng()
-    df = big_df()
-    N_0 = np.percentile(df["num consensus molecules"], 0.1)
-    print("N_0 = {}".format(N_0))
-
-    df = df[df["num consensus molecules"] >= N_0]
-    df["num changes"] = rng.binomial(
-        n=N_0, p=df["num changes"] / df["num consensus molecules"]
-    )
-    df.drop(labels="num consensus molecules", axis=1)
-    df.to_csv("data_files\\downsample.txt")
-    return df
