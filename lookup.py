@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
-from constants import CHANGES, LANES, PEOPLE
+from constants import CHANGES, CHUNKSIZE, LANES, PEOPLE
 
-column_names = [
+
+sample_column_names = [
     "chromosome",
     "position",
     "change",
@@ -20,18 +21,44 @@ id_df = pd.read_csv(
 )
 
 seq_df = pd.read_csv(
-    "data_files\\sequences.txt",
+    "data_files\\illumina_80Genes_panel.bed",
     header=None,
-    names=["chromosome", "start", "end"],
-    sep=";",
+    names=["chromosome", "start", "end", "who tf knows", "length", "strand"],
+    sep="\t",
 )
-seq_df["length"] = seq_df["end"] - seq_df["start"] + 1
+seq_df.sort_values(
+    "chromosome", inplace=True, kind="mergesort", ignore_index=True
+)  # use mergesort for stability
+seq_df.to_csv("spam.csv")
+
+
+def separating_sequences():
+    for i, sequence in seq_df.iterrows():
+        print("sequence {}".format(i))
+        df = pd.DataFrame(columns=sample_column_names)
+        for j, chunk in enumerate(
+            pd.read_csv(
+                "data_files\\full_data.txt",
+                chunksize=CHUNKSIZE,
+                header=None,
+                names=sample_column_names,
+                sep="\t",
+            )
+        ):
+            df = df.append(
+                chunk.loc[
+                    (chunk["position"] >= sequence["start"])
+                    & (chunk["position"] <= sequence["end"])
+                ],
+                ignore_index=True,
+            )
+        df.to_csv("data_files\\sequences\\seq_{}.csv".format(i))
 
 
 def big_df():
-    df = pd.DataFrame(columns=column_names)
+    df = pd.DataFrame(columns=sample_column_names)
     df = pd.read_csv(
-        "data_files\\full_data.txt", header=None, names=column_names, sep="\t",
+        "data_files\\full_data.txt", header=None, names=sample_column_names, sep="\t",
     )
     return df
 
@@ -87,7 +114,7 @@ def figuring_out_the_data():
     current_chr = ""
     counter = 0
     df = pd.read_csv(
-        "data_files\\full_data.txt", header=None, names=column_names, sep="\t",
+        "data_files\\full_data.txt", header=None, names=sample_column_names, sep="\t",
     )
     start_position = df.at[0, "position"]
     current_position = start_position
@@ -128,4 +155,4 @@ def figuring_out_the_data():
     return
 
 
-figuring_out_the_data()
+separating_sequences()
