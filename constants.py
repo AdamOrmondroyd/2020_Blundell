@@ -1,6 +1,6 @@
 import numpy as np
 
-CHUNKSIZE = 3 * 10 ** 6
+CHUNKSIZE = 10 ** 6
 
 AGES = np.array([0, 7, 17, 24])
 BASES = np.array(["A", "C", "G", "T"])

@@ -32,26 +32,34 @@ seq_df.sort_values(
 seq_df.to_csv("spam.csv")
 
 
-def separating_sequences():
-    for i, sequence in seq_df.iterrows():
-        print("sequence {}".format(i))
-        df = pd.DataFrame(columns=sample_column_names)
-        for j, chunk in enumerate(
-            pd.read_csv(
-                "data_files\\full_data.txt",
-                chunksize=CHUNKSIZE,
-                header=None,
-                names=sample_column_names,
-                sep="\t",
-            )
-        ):
-            df = df.append(
+def separating_sequences(sequence_numbers):
+    reduced_seq_df = seq_df.loc[sequence_numbers]
+    seq_dfs = []
+    for i in range(len(sequence_numbers)):
+        seq_dfs.append(pd.DataFrame(columns=sample_column_names))
+
+    for j, chunk in enumerate(
+        pd.read_csv(
+            "data_files\\full_data.txt",
+            chunksize=CHUNKSIZE,
+            header=None,
+            names=sample_column_names,
+            sep="\t",
+        )
+    ):
+        print("chunk {}".format(j))
+        for i, sequence in reduced_seq_df.iterrows():
+            # print("sequence {}".format(i))
+
+            seq_dfs[i] = seq_dfs[i].append(
                 chunk.loc[
                     (chunk["position"] >= sequence["start"])
                     & (chunk["position"] <= sequence["end"])
                 ],
                 ignore_index=True,
             )
+
+    for i, df in zip(sequence_numbers, seq_dfs):
         df.to_csv("data_files\\sequences\\seq_{}.csv".format(i))
 
 
@@ -155,4 +163,4 @@ def figuring_out_the_data():
     return
 
 
-separating_sequences()
+separating_sequences(np.arange(0, 100))
