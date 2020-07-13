@@ -48,7 +48,9 @@ def separating_sequences(sequence_numbers):
         )
     ):
         print("chunk {}".format(j))
-        for i, sequence in reduced_seq_df.iterrows():
+        for i, (k, sequence) in zip(
+            range(sequence_numbers.size), reduced_seq_df.iterrows()
+        ):
             # print("sequence {}".format(i))
 
             seq_dfs[i] = seq_dfs[i].append(
@@ -163,4 +165,14 @@ def figuring_out_the_data():
     return
 
 
-separating_sequences(np.arange(0, 100))
+# separating_sequences(np.arange(0, 100))
+separating_sequences(np.arange(100, 200))
+separating_sequences(np.arange(200, 300))
+separating_sequences(np.arange(300, 400))
+separating_sequences(np.arange(400, 500))
+separating_sequences(np.arange(500, 600))
+separating_sequences(np.arange(600, 700))
+separating_sequences(np.arange(700, 800))
+separating_sequences(np.arange(800, 900))
+separating_sequences(np.arange(900, 1000))
+separating_sequences(np.arange(1000, 1063))
