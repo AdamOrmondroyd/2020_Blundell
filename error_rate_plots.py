@@ -10,21 +10,22 @@ from constants import (
     base_color_map,
     change_color_map,
 )
-from lookup import lookup, seq_df
+from lookup import lookup, seq_df, seq_data_df
 
 # df = lookup(PEOPLE, LANES, seq_df.at[0, "chromosome"], seq_df.at[0, "start"])
 sequence = 1
 positions = np.arange(seq_df.at[sequence, "start"], seq_df.at[sequence, "end"])
 chromosome = seq_df.at[sequence, "chromosome"]
+strand = seq_df.at[sequence, "strand"]
 
 change_error_rates_map = {}
 
-df = lookup(chromosome, positions)
+df = seq_data_df(sequence)
 
 base_fig_map = {}
 base_axs_map = {}
 fig2, ax2 = plt.subplots(figsize=(10, 7))
-plot_title = "{}_{}-{}".format(chromosome, positions[0], positions[-1])
+plot_title = "{}_{}-{}_({})".format(chromosome, positions[0], positions[-1], strand)
 
 
 for base in BASES:

@@ -32,6 +32,12 @@ seq_df.sort_values(
 seq_df.to_csv("spam.csv")
 
 
+def seq_data_df(sequence_number):
+    return pd.read_csv(
+        "data_files\\sequences\\seq_{}.csv".format(sequence_number), index_col=0
+    )
+
+
 def separating_sequences(sequence_numbers):
     reduced_seq_df = seq_df.loc[sequence_numbers]
     seq_dfs = []
