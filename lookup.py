@@ -164,15 +164,3 @@ def figuring_out_the_data():
     seq_df.to_csv("data_files\\sequences2.txt")
     return
 
-
-# separating_sequences(np.arange(0, 100))
-separating_sequences(np.arange(100, 200))
-separating_sequences(np.arange(200, 300))
-separating_sequences(np.arange(300, 400))
-separating_sequences(np.arange(400, 500))
-separating_sequences(np.arange(500, 600))
-separating_sequences(np.arange(600, 700))
-separating_sequences(np.arange(700, 800))
-separating_sequences(np.arange(800, 900))
-separating_sequences(np.arange(900, 1000))
-separating_sequences(np.arange(1000, 1063))
