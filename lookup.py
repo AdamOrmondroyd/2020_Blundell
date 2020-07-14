@@ -1,13 +1,14 @@
 import numpy as np
 import pandas as pd
+import os
 from constants import CHANGES, CHUNKSIZE, LANES, PEOPLE
 
 
 sample_column_names = [
     "chromosome",
     "position",
-    "change",
-    "num changes",
+    "sub",
+    "num subs",
     "num consensus molecules",
     "sample ID",
 ]
@@ -33,25 +34,29 @@ seq_df.to_csv("spam.csv")
 
 
 def seq_data_df(sequence_number):
+    """
+    Returns DataFrame from seq_(sequence_number).csv
+    """
     return pd.read_csv(
         "data_files\\sequences\\seq_{}.csv".format(sequence_number), index_col=0
     )
 
 
 def separating_sequences(sequence_numbers):
+    """
+    Separates the sequences in full_data.txt by the sequences in Caroline's file.
+
+    sequence_numbers = list of sequences to produce files for.
+
+    Note: cannot do all sequences at once.
+    """
     reduced_seq_df = seq_df.loc[sequence_numbers]
     seq_dfs = []
     for i in range(len(sequence_numbers)):
         seq_dfs.append(pd.DataFrame(columns=sample_column_names))
 
     for j, chunk in enumerate(
-        pd.read_csv(
-            "data_files\\full_data.txt",
-            chunksize=CHUNKSIZE,
-            header=None,
-            names=sample_column_names,
-            sep="\t",
-        )
+        pd.read_csv("data_files\\downsampled_data.txt", chunksize=CHUNKSIZE,)
     ):
         print("chunk {}".format(j))
         for i, (k, sequence) in zip(
@@ -69,58 +74,6 @@ def separating_sequences(sequence_numbers):
 
     for i, df in zip(sequence_numbers, seq_dfs):
         df.to_csv("data_files\\sequences\\seq_{}.csv".format(i))
-
-
-def big_df():
-    df = pd.DataFrame(columns=sample_column_names)
-    df = pd.read_csv(
-        "data_files\\full_data.txt", header=None, names=sample_column_names, sep="\t",
-    )
-    return df
-
-
-def downsample_df():
-    rng = np.random.default_rng()
-    df = big_df()
-    N_0 = np.percentile(df["num consensus molecules"], 0.1)
-    print("N_0 = {}".format(N_0))
-
-    df = df[df["num consensus molecules"] >= N_0]
-    df["num changes"] = rng.binomial(
-        n=N_0, p=df["num changes"] / df["num consensus molecules"]
-    )
-    df.drop(labels="num consensus molecules", axis=1)
-    df.to_csv("data_files\\downsample.txt")
-    return df
-
-
-def lookup(
-    chromosome, positions, change=CHANGES, people=PEOPLE, lanes=LANES, downsample=False
-):
-    """
-    Looks up a given people, ages (given by lanes) and transitions (e.g. AC).
-    "lane1" = age0, "lane2" = age7, "lane3" = age17, "lane4" = age24
-    """
-    sample_ids = np.zeros(
-        people.size * lanes.size, dtype="U14"
-    )  # string length 14, keep an eye on this
-
-    for j in range(people.size):
-        for i in range(lanes.size):
-            sample_ids[j * lanes.size + i] = id_df.at[people[j], lanes[i]][:14]
-
-    if downsample:
-        df = downsample_df()
-    else:
-        df = big_df()
-
-    df = df.loc[
-        np.isin(df["sample ID"], sample_ids)
-        & np.isin(df["position"], positions)
-        & (df["chromosome"] == chromosome)
-        & np.isin(df["change"], change)
-    ]
-    return df
 
 
 def figuring_out_the_data():
@@ -170,3 +123,64 @@ def figuring_out_the_data():
     seq_df.to_csv("data_files\\sequences2.txt")
     return
 
+
+def percentile(q):
+    """
+    Finds the qth percentile of the number of consensus molecules.
+    """
+    Nss = []
+    for i, chunk in enumerate(
+        pd.read_csv(
+            "data_files\\full_data.txt",
+            chunksize=CHUNKSIZE,
+            header=None,
+            names=sample_column_names,
+            sep="\t",
+            usecols=["num consensus molecules"],
+        )
+    ):
+        print(i)
+        Ns = chunk["num consensus molecules"].to_numpy()
+        Ns = Ns.astype(int)
+        Nss.append(Ns)
+    Nss = np.hstack(Nss)
+    return np.percentile(Nss, q)
+
+
+def downsample(q):
+    """
+    Downsamples full_data.txt to qth percentile of number of consensus molecules.
+    """
+    os.remove("data_files\\downsampled_data.txt")
+    rng = np.random.default_rng()
+    header = True
+    N_0 = percentile(q)
+    for i, chunk in enumerate(
+        pd.read_csv(
+            "data_files\\full_data.txt",
+            chunksize=CHUNKSIZE,
+            header=None,
+            names=sample_column_names,
+            sep="\t",
+        )
+    ):
+        print(i)
+        chunk["downsample"] = rng.binomial(
+            n=N_0, p=chunk["num subs"] / chunk["num consensus molecules"]
+        )
+        chunk.to_csv("data_files\\downsampled_data.txt", mode="a", header=header)
+        header = False
+
+
+def separating_sequences_wrap():
+    separating_sequences(np.arange(0, 100))
+    separating_sequences(np.arange(100, 200))
+    separating_sequences(np.arange(200, 300))
+    separating_sequences(np.arange(300, 400))
+    separating_sequences(np.arange(400, 500))
+    separating_sequences(np.arange(500, 600))
+    separating_sequences(np.arange(600, 700))
+    separating_sequences(np.arange(700, 800))
+    separating_sequences(np.arange(800, 900))
+    separating_sequences(np.arange(900, 1000))
+    separating_sequences(np.arange(1000, 1063))
