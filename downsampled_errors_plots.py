@@ -10,7 +10,7 @@ from constants import (
     base_color_map,
     change_color_map,
 )
-from lookup import lookup, seq_df, seq_data_df
+from lookup import seq_df, seq_data_df
 
 # df = lookup(PEOPLE, LANES, seq_df.at[0, "chromosome"], seq_df.at[0, "start"])
 sequence = 1
@@ -38,7 +38,7 @@ for base in BASES:
         for i, position in enumerate(positions):
             df_position = df_change.loc[df_change["position"] == position]
             if len(df_position.index) != 0:
-                num_changes = np.sum(df_position["num subs"])
+                num_changes = np.sum(df_position["downsample"])
                 total_consensus = np.sum(df_position["num consensus molecules"])
                 error_rates[i] = num_changes / total_consensus
 
