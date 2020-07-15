@@ -19,16 +19,16 @@ for gene_number in [244]:
     change_error_rates_map = {}
     gene = gene_df.loc[gene_number, :]
 
-    sequences = gene_seqs_map[gene_number].index
+    sequences = gene_seqs_map[gene_number]
 
-    df = seq_data_df(sequences[0])
-    for sequence in sequences[1:]:
+    df = seq_data_df(sequences.index[0])
+    for sequence in sequences.index[1:]:
         df = pd.concat([df, seq_data_df(sequence)]).drop_duplicates(keep=False)
 
     positions = np.arange(gene["start"], gene["end"])
 
     plot_title = "Gene {} ".format(gene_number)
-    for sequence in sequences:
+    for sequence in sequences.index:
         plot_title += seq_df.at[sequence, "strand"]
 
     base_fig_map = {}

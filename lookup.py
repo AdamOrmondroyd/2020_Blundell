@@ -43,16 +43,23 @@ for i, gene in gene_df.iterrows():
     gene_seqs_map[i] = seq_df.loc[
         (seq_df["start"] >= gene["start"]) & (seq_df["end"] <= gene["end"])
     ]
-    print("{}: {}".format(i, len(gene_seqs_map[i].index)))
+    # print("{}: {}".format(i, len(gene_seqs_map[i].index)))
 
 
-def seq_data_df(sequence_number):
+def seq_data_df(sequence_number, group_by=None):
     """
     Returns DataFrame from seq_(sequence_number).csv
     """
-    return pd.read_csv(
-        "data_files\\sequences\\seq_{}.csv".format(sequence_number), index_col=0
-    )
+    if group_by == "position":
+        return pd.read_csv(
+            "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
+                sequence_number
+            )
+        )
+    else:
+        return pd.read_csv(
+            "data_files\\sequences\\seq_{}.csv".format(sequence_number), index_col=0
+        )
 
 
 def separating_sequences(sequence_numbers):
@@ -185,6 +192,28 @@ def downsample(q):
         chunk["downsample"] = rng.binomial(n=N_0, p=chunk["sub rate"])
         chunk.to_csv("data_files\\downsampled_data.txt", mode="a", header=header)
         header = False
+
+
+def group_by_position(sequence_number):
+    df = seq_data_df(sequence_number)
+    df = df.drop(columns=["sample ID", "sub rate"])
+    aggregation_functions = {
+        "chromosome": "first",
+        "sub": "first",
+        "num subs": "sum",
+        "downsample": "sum",
+    }
+    df = df.groupby(df["position"]).aggregate(aggregation_functions)
+    df.to_csv(
+        "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
+            sequence_number
+        )
+    )
+
+
+for i in np.arange(0, 1063):
+    group_by_position(i)
+    print(i)
 
 
 # downsample(0.1)
