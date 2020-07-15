@@ -21,6 +21,13 @@ id_df = pd.read_csv(
     index_col=-1,
 )
 
+gene_df = pd.read_csv(
+    "data_files\\nonTiled.80genes.panel.bed",
+    header=None,
+    names=["chromosome", "start", "end"],
+    sep="\t",
+)
+
 seq_df = pd.read_csv(
     "data_files\\illumina_80Genes_panel.bed",
     header=None,
@@ -30,7 +37,13 @@ seq_df = pd.read_csv(
 seq_df.sort_values(
     "chromosome", inplace=True, kind="mergesort", ignore_index=True
 )  # use mergesort for stability
-seq_df.to_csv("spam.csv")
+
+gene_seqs_map = {}
+for i, gene in gene_df.iterrows():
+    gene_seqs_map[i] = seq_df.loc[
+        (seq_df["start"] >= gene["start"]) & (seq_df["end"] <= gene["end"])
+    ]
+    print("{}: {}".format(i, len(gene_seqs_map[i].index)))
 
 
 def seq_data_df(sequence_number):
@@ -56,7 +69,9 @@ def separating_sequences(sequence_numbers):
         seq_dfs.append(pd.DataFrame(columns=sample_column_names))
 
     for j, chunk in enumerate(
-        pd.read_csv("data_files\\downsampled_data.txt", chunksize=CHUNKSIZE,)
+        pd.read_csv(
+            "data_files\\downsampled_data.txt", chunksize=CHUNKSIZE, index_col=0
+        )
     ):
         print("chunk {}".format(j))
         for i, (k, sequence) in zip(
@@ -151,7 +166,8 @@ def downsample(q):
     """
     Downsamples full_data.txt to qth percentile of number of consensus molecules.
     """
-    os.remove("data_files\\downsampled_data.txt")
+    if os.path.isfile("data_files\\downsampled_data.txt"):
+        os.remove("data_files\\downsampled_data.txt")
     rng = np.random.default_rng()
     header = True
     N_0 = percentile(q)
@@ -165,11 +181,13 @@ def downsample(q):
         )
     ):
         print(i)
-        chunk["downsample"] = rng.binomial(
-            n=N_0, p=chunk["num subs"] / chunk["num consensus molecules"]
-        )
+        chunk["sub rate"] = chunk["num subs"] / chunk["num consensus molecules"]
+        chunk["downsample"] = rng.binomial(n=N_0, p=chunk["sub rate"])
         chunk.to_csv("data_files\\downsampled_data.txt", mode="a", header=header)
         header = False
+
+
+# downsample(0.1)
 
 
 def separating_sequences_wrap():
@@ -184,3 +202,7 @@ def separating_sequences_wrap():
     separating_sequences(np.arange(800, 900))
     separating_sequences(np.arange(900, 1000))
     separating_sequences(np.arange(1000, 1063))
+
+
+# separating_sequences_wrap()
+

@@ -13,7 +13,10 @@ from constants import (
 from lookup import seq_df, seq_data_df
 
 # df = lookup(PEOPLE, LANES, seq_df.at[0, "chromosome"], seq_df.at[0, "start"])
-sequence = 1
+sequences = np.array([0, 1])
+markers = np.array(["s", "o"])
+plot_title = "{}".format(sequences)
+
 positions = np.arange(seq_df.at[sequence, "start"], seq_df.at[sequence, "end"])
 chromosome = seq_df.at[sequence, "chromosome"]
 strand = seq_df.at[sequence, "strand"]
@@ -24,9 +27,6 @@ df = seq_data_df(sequence)
 
 base_fig_map = {}
 base_axs_map = {}
-fig2, ax2 = plt.subplots(figsize=(10, 7))
-plot_title = "{}_{}-{}_({})".format(chromosome, positions[0], positions[-1], strand)
-
 
 for base in BASES:
     base_fig_map[base], base_axs_map[base] = plt.subplots(2, 2, figsize=(15, 8))
@@ -38,26 +38,16 @@ for base in BASES:
         for i, position in enumerate(positions):
             df_position = df_change.loc[df_change["position"] == position]
             if len(df_position.index) != 0:
-                num_changes = np.sum(df_position["downsample"])
+                num_changes = np.sum(df_position["num subs"])
                 total_consensus = np.sum(df_position["num consensus molecules"])
                 error_rates[i] = num_changes / total_consensus
 
         change_error_rates_map[sub] = error_rates
 
-        ax2.plot(
-            positions,
-            error_rates,
-            label=sub,
-            linestyle="None",
-            marker="+",
-            color=change_color_map[sub],
-        )
-
 consensuses = np.zeros(positions.size)
 for i, position in enumerate(positions):
     df_position = df.loc[df["position"] == position]
     consensuses[i] = np.sum(df_position["num consensus molecules"])
-
 
 for base in BASES:
     axs = base_axs_map[base]
@@ -107,10 +97,4 @@ for base in BASES:
     fig.savefig("plots\\{}_{}_error_rate.png".format(plot_title, base))
 
 
-ax2.set(title=plot_title, xlabel="position", ylabel="error rate")
-ax2.legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
-fig2.tight_layout()
-# don't use standard form for axes, have to set log scale afterwards
-ax2.ticklabel_format(useOffset=False, style="plain")
-ax2.set(yscale="log")
-fig2.savefig("plots\\{}_error_rate_together.png".format(plot_title))
+plt.show()
