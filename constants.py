@@ -10,7 +10,7 @@ lane_age_map = {"lane1": 0, "lane2": 7, "lane3": 17, "lane4": 24}
 CHANGES = np.array(
     ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
 )
-base_changes_map = {
+base_subs_map = {
     "A": CHANGES[:3],
     "C": CHANGES[3:6],
     "G": CHANGES[6:9],
@@ -22,7 +22,7 @@ base_color_map = {
     "G": "magenta",
     "T": "black",
 }
-change_color_map = {
+sub_color_map = {
     "AC": "lime",
     "AG": "blueviolet",
     "AT": "dodgerblue",

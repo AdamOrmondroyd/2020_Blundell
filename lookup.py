@@ -203,10 +203,10 @@ def group_by_position(sequence_number):
         "chromosome": "first",
         "sub": "first",
         "num subs": "sum",
-        "num consensus molecules": sum,
+        "num consensus molecules": "sum",
         "downsample": "sum",
     }
-    df = df.groupby(df["position"]).aggregate(aggregation_functions)
+    df = df.groupby(["position", "sub"]).aggregate(aggregation_functions)
     df.to_csv(
         "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
             sequence_number
@@ -218,6 +218,9 @@ def group_by_position_wrapper():
     for i in np.arange(0, 1063):
         group_by_position(i)
         print(i)
+
+
+group_by_position_wrapper()
 
 
 # downsample(0.1)
