@@ -14,46 +14,38 @@ from constants import (
 from lookup import gene_df, gene_seqs_map, seq_df, seq_data_df
 
 # for gene_number in gene_df.index:
-for gene_number in [244]:
+for gene_number in [0]:
     print(gene_number)
-    change_error_rates_map = {}
     gene = gene_df.loc[gene_number, :]
 
     sequences = gene_seqs_map[gene_number]
 
-    df = seq_data_df(sequences.index[0])
+    df = seq_data_df(sequences.index[0], group_by="position")
     for sequence in sequences.index[1:]:
-        df = pd.concat([df, seq_data_df(sequence)]).drop_duplicates(keep=False)
+        df = pd.concat(
+            [df, seq_data_df(sequence, group_by="position")]
+        ).drop_duplicates(keep=False)
 
-    positions = np.arange(gene["start"], gene["end"])
+    # positions = np.arange(gene["start"], gene["end"] + 1)
 
     plot_title = "Gene {} ".format(gene_number)
     for sequence in sequences.index:
         plot_title += seq_df.at[sequence, "strand"]
 
+    # maps used for plotting
     base_fig_map = {}
     base_axs_map = {}
+    change_error_rates_map = {}
+    change_positions_map = {}
 
     for base in BASES:
         base_fig_map[base], base_axs_map[base] = plt.subplots(2, 2, figsize=(15, 8))
         for sub in base_changes_map[base]:
             print(sub)
             df_change = df.loc[df["sub"] == sub]
-            # df.to_csv("data_files\\spam.csv")
-            error_rates = np.zeros(positions.size)
-            for i, position in enumerate(positions):
-                df_position = df_change.loc[df_change["position"] == position]
-                if len(df_position.index) != 0:
-                    num_changes = np.sum(df_position["num subs"])
-                    total_consensus = np.sum(df_position["num consensus molecules"])
-                    error_rates[i] = num_changes / total_consensus
-
+            error_rates = df_change["num subs"] / df_change["num consensus molecules"]
             change_error_rates_map[sub] = error_rates
-
-    consensuses = np.zeros(positions.size)
-    for i, position in enumerate(positions):
-        df_position = df.loc[df["position"] == position]
-        consensuses[i] = np.sum(df_position["num consensus molecules"])
+            change_positions_map[sub] = df_change["position"]
 
     for base in BASES:
         axs = base_axs_map[base]
@@ -66,7 +58,7 @@ for gene_number in [244]:
                 else:
                     color = "lightgrey"
                 ax.plot(
-                    positions,
+                    change_positions_map[sub],
                     change_error_rates_map[sub],
                     label=sub,
                     linestyle="None",
@@ -78,7 +70,7 @@ for gene_number in [244]:
             ax.set(xlabel="position", ylabel="error rate", yscale="log")
         for sub in base_changes_map[base]:
             axs[-1].plot(
-                positions,
+                change_positions_map[sub],
                 change_error_rates_map[sub],
                 label=sub,
                 linestyle="None",
@@ -92,7 +84,11 @@ for gene_number in [244]:
         for ax in axs:
             axtwin = ax.twinx()
             axtwin.plot(
-                positions, consensuses, label="consensus", color="black", alpha=0.25
+                df["position"],
+                df["num consensus molecules"],
+                label="consensus",
+                color="black",
+                alpha=0.25,
             )
             axtwin.set(ylabel="number of consensus molecules")
 
@@ -101,4 +97,5 @@ for gene_number in [244]:
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
         fig.savefig("plots\\{}_{}_error_rate.png".format(plot_title, base))
+    plt.show()
     plt.close("all")

@@ -49,6 +49,8 @@ for i, gene in gene_df.iterrows():
 def seq_data_df(sequence_number, group_by=None):
     """
     Returns DataFrame from seq_(sequence_number).csv
+
+    group_by = "position" combines samples at the same position
     """
     if group_by == "position":
         return pd.read_csv(
@@ -201,6 +203,7 @@ def group_by_position(sequence_number):
         "chromosome": "first",
         "sub": "first",
         "num subs": "sum",
+        "num consensus molecules": sum,
         "downsample": "sum",
     }
     df = df.groupby(df["position"]).aggregate(aggregation_functions)
@@ -211,9 +214,10 @@ def group_by_position(sequence_number):
     )
 
 
-for i in np.arange(0, 1063):
-    group_by_position(i)
-    print(i)
+def group_by_position_wrapper():
+    for i in np.arange(0, 1063):
+        group_by_position(i)
+        print(i)
 
 
 # downsample(0.1)
