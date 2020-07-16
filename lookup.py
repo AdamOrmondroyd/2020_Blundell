@@ -220,9 +220,6 @@ def group_by_position_wrapper():
         print(i)
 
 
-group_by_position_wrapper()
-
-
 # downsample(0.1)
 
 
