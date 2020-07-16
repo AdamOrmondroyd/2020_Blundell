@@ -87,6 +87,9 @@ for gene_number in [0]:
                 df["position"],
                 df["num consensus molecules"],
                 label="consensus",
+                linestyle="None",
+                marker="+",
+                markersize="0.5",
                 color="black",
                 alpha=0.25,
             )

@@ -22,14 +22,14 @@ id_df = pd.read_csv(
 )
 
 gene_df = pd.read_csv(
-    "data_files\\nonTiled.80genes.panel.bed",
+    "data_files\\Wing_genes.bed",
     header=None,
     names=["chromosome", "start", "end"],
     sep="\t",
 )
 
 seq_df = pd.read_csv(
-    "data_files\\illumina_80Genes_panel.bed",
+    "data_files\\Caroline_sequences.bed",
     header=None,
     names=["chromosome", "start", "end", "who tf knows", "length", "strand"],
     sep="\t",
