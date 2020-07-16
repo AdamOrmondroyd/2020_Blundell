@@ -34,6 +34,7 @@ seq_df = pd.read_csv(
     names=["chromosome", "start", "end", "who tf knows", "length", "strand"],
     sep="\t",
 )
+
 seq_df.sort_values(
     "chromosome", inplace=True, kind="mergesort", ignore_index=True
 )  # use mergesort for stability
@@ -43,7 +44,6 @@ for i, gene in gene_df.iterrows():
     gene_seqs_map[i] = seq_df.loc[
         (seq_df["start"] >= gene["start"]) & (seq_df["end"] <= gene["end"])
     ]
-    # print("{}: {}".format(i, len(gene_seqs_map[i].index)))
 
 
 def seq_data_df(sequence_number, group_by=None):
@@ -200,8 +200,6 @@ def empty_sequences():
     Identifies any empty sequences.
     """
     for i, gene in gene_df.iterrows():
-        # print(i)
         for j, seq in gene_seqs_map[i].iterrows():
-            # print(j)
             if 0 == len(seq_data_df(j).index):
                 print("Empty sequence found, gene {} sequence {}".format(i, j))
