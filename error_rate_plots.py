@@ -6,18 +6,13 @@ from constants import BASES, CHANGES, base_subs_map, sub_color_map
 from lookup import gene_df, gene_seqs_map, seq_data_df
 
 # for gene_number in np.arange(0, 10):
-for gene_number in [415]:
+for gene_number in [6]:
     print(gene_number)
     gene = gene_df.loc[gene_number, :]
 
     plot_title = "Gene {} ".format(gene_number)
 
     seq_df = gene_seqs_map[gene_number]
-    if len(seq_df.index) < 2:
-        print(
-            "Gene only contains 1 sequence, code doesn't allow for all sequences being on the same strand"
-        )
-        continue
 
     consensus_df = pd.DataFrame()
     for i in seq_df.index:
@@ -27,24 +22,32 @@ for gene_number in [415]:
 
     pos_seq_df = seq_df.loc[seq_df["strand"] == "+"]
     neg_seq_df = seq_df.loc[seq_df["strand"] == "-"]
-    pos_df = pd.DataFrame()
-    neg_df = pd.DataFrame()
 
-    # Bring together the data for each sequence, grouped by position and dropping overlaps between sequences
-    for i in pos_seq_df.index:
-        pos_df = pd.concat(
-            [pos_df, seq_data_df(i, group_by="position")]
-        ).drop_duplicates(keep=False)
-    for i in neg_seq_df.index:
-        neg_df = pd.concat(
-            [neg_df, seq_data_df(i, group_by="position")]
-        ).drop_duplicates(keep=False)
+    # Bring together the data for each sequence, separated by pos and neg strand, grouped by position
+    pos = False
+    if len(pos_seq_df.index):
+        pos = True
+        pos_df = pd.DataFrame()
+        for i in pos_seq_df.index:
+            pos_df = pd.concat(
+                [pos_df, seq_data_df(i, group_by="position")]
+            ).drop_duplicates(keep=False)
 
-    # Drop rows that appear in the other df
-    pos_cond = ~pos_df["position"].isin(neg_df["position"])
-    neg_cond = ~neg_df["position"].isin(pos_df["position"])
-    pos_df = pos_df.loc[pos_cond, :]
-    neg_df = neg_df.loc[neg_cond, :]
+    negative = False
+    if len(neg_seq_df.index):
+        neg = True
+        neg_df = pd.DataFrame()
+        for i in neg_seq_df.index:
+            neg_df = pd.concat(
+                [neg_df, seq_data_df(i, group_by="position")]
+            ).drop_duplicates(keep=False)
+
+    # Drop rows that appear in the other strand
+    if pos and neg:
+        pos_cond = ~pos_df["position"].isin(neg_df["position"])
+        neg_cond = ~neg_df["position"].isin(pos_df["position"])
+        pos_df = pos_df.loc[pos_cond, :]
+        neg_df = neg_df.loc[neg_cond, :]
 
     # Make up plot title
     for strand in seq_df["strand"]:
@@ -56,7 +59,7 @@ for gene_number in [415]:
         axs = axs.flatten()
         for j, ax in enumerate(axs):
             for i, sub in enumerate(base_subs_map[base]):
-                if (3 == j) | (i == j):
+                if (3 == j) or (i == j):
                     color = sub_color_map[sub]
                     if 3 == j:
                         ax.set(title=base)
@@ -65,27 +68,28 @@ for gene_number in [415]:
                 else:
                     color = "lightgrey"
 
-                pos_sub_df = pos_df.loc[pos_df["sub"] == sub]
-                neg_sub_df = neg_df.loc[neg_df["sub"] == sub]
-
-                ax.plot(
-                    pos_sub_df["position"],
-                    pos_sub_df["num subs"] / pos_sub_df["num consensus molecules"],
-                    label=sub + "+",
-                    linestyle="None",
-                    marker="^",
-                    color=color,
-                    alpha=0.5,
-                )
-                ax.plot(
-                    neg_sub_df["position"],
-                    neg_sub_df["num subs"] / neg_sub_df["num consensus molecules"],
-                    label=sub + "-",
-                    linestyle="None",
-                    marker="v",
-                    color=color,
-                    alpha=0.5,
-                )
+                if pos:
+                    pos_sub_df = pos_df.loc[pos_df["sub"] == sub]
+                    ax.plot(
+                        pos_sub_df["position"],
+                        pos_sub_df["num subs"] / pos_sub_df["num consensus molecules"],
+                        label=sub + "+",
+                        linestyle="None",
+                        marker="^",
+                        color=color,
+                        alpha=0.5,
+                    )
+                if neg:
+                    neg_sub_df = neg_df.loc[neg_df["sub"] == sub]
+                    ax.plot(
+                        neg_sub_df["position"],
+                        neg_sub_df["num subs"] / neg_sub_df["num consensus molecules"],
+                        label=sub + "-",
+                        linestyle="None",
+                        marker="v",
+                        color=color,
+                        alpha=0.5,
+                    )
             ax.ticklabel_format(useOffset=False, style="plain")
             ax.set(xlabel="position", ylabel="error rate", yscale="log")
 
@@ -105,4 +109,4 @@ for gene_number in [415]:
         fig.tight_layout()
         fig.savefig("plots\\{}_{}_error_rate.png".format(plot_title, base))
 
-    plt.close()
+    plt.close("all")
