@@ -56,12 +56,17 @@ def seq_data_df(sequence_number, group_by=None):
     Returns DataFrame from seq_(sequence_number).csv.
 
     group_by = "position" combines samples at the same position.
+    group_by = "ID" combines samples with the same ID (person and age)
     """
     if group_by == "position":
         return pd.read_csv(
             "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
                 sequence_number
             )
+        )
+    elif group_by == "ID":
+        return pd.read_csv(
+            "data_files_sequences_by_ID\\seq_{}_group_ID.csv".format(sequence_number)
         )
     else:
         return pd.read_csv(
@@ -167,7 +172,7 @@ def group_by_position(sequence_number):
     """
     df = seq_data_df(sequence_number)
     df = df.drop(columns=["sample ID"])
-    df = df.groupby(["position", "chromosome", "sub"]).aggregate(aggregation_functions)
+    df = df.groupby(["position", "chromosome", "sub"]).agg(aggregation_functions)
     df.to_csv(
         "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
             sequence_number
@@ -189,9 +194,11 @@ def group_by_ID(sequence_number):
     Groups the specified sequence by ID (person and age).
     """
     df = seq_data_df(sequence_number)
-    df.drop(columns=["position"])
-    df.groupby(["sample ID", "chromosome", "sub"]).aggregate(aggregation_functions)
-    df.to_csv("data_files\\sequences_by_ID\\seq_{}.csv".format(sequence_number))
+    df = df.drop(columns=["position"])
+    df = df.groupby(["sample ID", "chromosome", "sub"]).agg(aggregation_functions)
+    df.to_csv(
+        "data_files\\sequences_by_ID\\seq_{}_group_ID.csv".format(sequence_number)
+    )
 
 
 def group_by_ID_wrapper():
