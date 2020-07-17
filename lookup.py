@@ -53,9 +53,9 @@ for i, gene in gene_df.iterrows():
 
 def seq_data_df(sequence_number, group_by=None):
     """
-    Returns DataFrame from seq_(sequence_number).csv
+    Returns DataFrame from seq_(sequence_number).csv.
 
-    group_by = "position" combines samples at the same position
+    group_by = "position" combines samples at the same position.
     """
     if group_by == "position":
         return pd.read_csv(
@@ -147,10 +147,18 @@ def downsample(q):
         )
     ):
         print(i)
-        chunk["sub rate"] = chunk["num subs"] / chunk["num consensus molecules"]
-        chunk["downsample"] = rng.binomial(n=N_0, p=chunk["sub rate"])
+        chunk["downsample"] = rng.binomial(
+            n=N_0, p=chunk["num subs"] / chunk["num consensus molecules"]
+        )
         chunk.to_csv("data_files\\downsampled_data.txt", mode="a", header=header)
         header = False
+
+
+aggregation_functions = {
+    "num subs": "sum",
+    "num consensus molecules": "sum",
+    "downsample": "sum",
+}
 
 
 def group_by_position(sequence_number):
@@ -158,15 +166,8 @@ def group_by_position(sequence_number):
     Groups the specified sequence by position.
     """
     df = seq_data_df(sequence_number)
-    df = df.drop(columns=["sample ID", "sub rate"])
-    aggregation_functions = {
-        "chromosome": "first",
-        "sub": "first",
-        "num subs": "sum",
-        "num consensus molecules": "sum",
-        "downsample": "sum",
-    }
-    df = df.groupby(["position", "sub"]).aggregate(aggregation_functions)
+    df = df.drop(columns=["sample ID"])
+    df = df.groupby(["position", "chromosome", "sub"]).aggregate(aggregation_functions)
     df.to_csv(
         "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
             sequence_number
@@ -183,9 +184,28 @@ def group_by_position_wrapper():
         print(i)
 
 
-def separating_sequences_wrap():
+def group_by_ID(sequence_number):
     """
-    Separates sequences in chunks of 100 to avoid memory issues
+    Groups the specified sequence by ID (person and age).
+    """
+    df = seq_data_df(sequence_number)
+    df.drop(columns=["position"])
+    df.groupby(["sample ID", "chromosome", "sub"]).aggregate(aggregation_functions)
+    df.to_csv("data_files\\sequences_by_ID\\seq_{}.csv".format(sequence_number))
+
+
+def group_by_ID_wrapper():
+    """
+    Repeats group by ID for all sequences.
+    """
+    for i in np.arange(0, 1063):
+        group_by_ID(i)
+        print(i)
+
+
+def separating_sequences_wrapper():
+    """
+    Separates sequences in chunks of 100 to avoid memory issues.
     """
     separating_sequences(np.arange(0, 100))
     separating_sequences(np.arange(100, 200))
