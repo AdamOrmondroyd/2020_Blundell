@@ -1,3 +1,8 @@
+"""
+# 2020 Blundell lab internship
+
+Contains functions for accessing the ALSPAC data using Pandas dataframes.
+"""
 import numpy as np
 import pandas as pd
 import os

@@ -1,3 +1,8 @@
+"""
+# 2020 Blundell lab intership
+
+Contains constants associated with working with the ALSPAC data.
+"""
 import numpy as np
 
 CHUNKSIZE = 10 ** 6

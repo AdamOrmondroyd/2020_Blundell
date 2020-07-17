@@ -1,3 +1,6 @@
+"""
+Generates plots of error rates for given genes.
+"""
 import numpy as np
 import pandas as pd
 from copy import deepcopy
@@ -107,6 +110,6 @@ for gene_number in [6]:
         fig.suptitle("{} {}".format(plot_title, base), size=16, y=0.52)
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
-        fig.savefig("plots\\{}_{}_error_rate.png".format(plot_title, base))
+        fig.savefig("plots\\error_rates\\{}_{}_error_rate.png".format(plot_title, base))
 
     plt.close("all")

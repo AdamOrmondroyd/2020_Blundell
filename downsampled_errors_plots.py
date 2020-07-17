@@ -1,102 +1,117 @@
+"""
+Generates plots of downsampled errors for given genes.
+"""
 import numpy as np
 import pandas as pd
+from copy import deepcopy
 import matplotlib.pyplot as plt
-from constants import (
-    BASES,
-    CHANGES,
-    LANES,
-    PEOPLE,
-    age_lane_map,
-    base_changes_map,
-    base_color_map,
-    change_color_map,
-)
-from lookup import gene_df, gene_seqs_map, seq_df, seq_data_df
+from constants import BASES, CHANGES, base_subs_map, sub_color_map
+from lookup import gene_df, gene_seqs_map, seq_data_df
 
-# for gene_number in gene_df.index:
-for gene_number in [76, 200, 415]:
+for gene_number in np.arange(0, 10):
+    # for gene_number in [6]:
     print(gene_number)
-    change_error_rates_map = {}
     gene = gene_df.loc[gene_number, :]
 
-    sequences = gene_seqs_map[gene_number].index
+    plot_title = "Gene {} ".format(gene_number)
 
-    df = seq_data_df(sequences[0])
-    for sequence in sequences[1:]:
-        df = pd.concat([df, seq_data_df(sequence)]).drop_duplicates(keep=False)
+    seq_df = gene_seqs_map[gene_number]
 
-    positions = np.arange(gene["start"], gene["end"])
+    consensus_df = pd.DataFrame()
+    for i in seq_df.index:
+        consensus_df = pd.concat(
+            [consensus_df, seq_data_df(i, group_by="position")]
+        ).drop_duplicates(keep="first")
 
-    plot_title = "Gene {} downsampled ".format(gene_number)
-    for sequence in sequences:
-        plot_title += seq_df.at[sequence, "strand"]
+    pos_seq_df = seq_df.loc[seq_df["strand"] == "+"]
+    neg_seq_df = seq_df.loc[seq_df["strand"] == "-"]
 
-    base_fig_map = {}
-    base_axs_map = {}
+    # Bring together the data for each sequence, separated by pos and neg strand, grouped by position
+    pos = False
+    if len(pos_seq_df.index):
+        pos = True
+        pos_df = pd.DataFrame()
+        for i in pos_seq_df.index:
+            pos_df = pd.concat(
+                [pos_df, seq_data_df(i, group_by="position")]
+            ).drop_duplicates(keep=False)
+
+    negative = False
+    if len(neg_seq_df.index):
+        neg = True
+        neg_df = pd.DataFrame()
+        for i in neg_seq_df.index:
+            neg_df = pd.concat(
+                [neg_df, seq_data_df(i, group_by="position")]
+            ).drop_duplicates(keep=False)
+
+    # Drop rows that appear in the other strand
+    if pos and neg:
+        pos_cond = ~pos_df["position"].isin(neg_df["position"])
+        neg_cond = ~neg_df["position"].isin(pos_df["position"])
+        pos_df = pos_df.loc[pos_cond, :]
+        neg_df = neg_df.loc[neg_cond, :]
+
+    # Make up plot title
+    for strand in seq_df["strand"]:
+        plot_title += strand
 
     for base in BASES:
-        base_fig_map[base], base_axs_map[base] = plt.subplots(2, 2, figsize=(15, 8))
-        for sub in base_changes_map[base]:
-            print(sub)
-            df_change = df.loc[df["sub"] == sub]
-            # df.to_csv("data_files\\spam.csv")
-            errors = np.zeros(positions.size)
-            for i, position in enumerate(positions):
-                df_position = df_change.loc[df_change["position"] == position]
-                if len(df_position.index) != 0:
-                    errors[i] = np.sum(df_position["downsample"])
+        fig, axs = plt.subplots(2, 2, figsize=(15, 8))
 
-            change_error_rates_map[sub] = errors
-
-    consensuses = np.zeros(positions.size)
-    for i, position in enumerate(positions):
-        df_position = df.loc[df["position"] == position]
-        consensuses[i] = np.sum(df_position["num consensus molecules"])
-
-    for base in BASES:
-        axs = base_axs_map[base]
         axs = axs.flatten()
-        for j, ax in enumerate(axs[:3]):
-            for i, sub in enumerate(base_changes_map[base]):
-                if i == j:
-                    color = change_color_map[sub]
-                    ax.set(title=sub)
+        for j, ax in enumerate(axs):
+            for i, sub in enumerate(base_subs_map[base]):
+                if (3 == j) or (i == j):
+                    color = sub_color_map[sub]
+                    if 3 == j:
+                        ax.set(title=base)
+                    else:
+                        ax.set(title=sub)
                 else:
                     color = "lightgrey"
-                ax.plot(
-                    positions,
-                    change_error_rates_map[sub],
-                    label=sub,
-                    linestyle="None",
-                    marker="o",
-                    color=color,
-                    alpha=0.5,
-                )
-            ax.ticklabel_format(useOffset=False, style="plain")
-            ax.set(xlabel="position", ylabel="error rate", yscale="log")
-        for sub in base_changes_map[base]:
-            axs[-1].plot(
-                positions,
-                change_error_rates_map[sub],
-                label=sub,
-                linestyle="None",
-                marker="o",
-                color=change_color_map[sub],
-                alpha=0.5,
-            )
-        axs[-1].legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
-        axs[-1].set(title=base, xlabel="position", ylabel="error rate", yscale="log")
 
-        for ax in axs:
+                if pos:
+                    pos_sub_df = pos_df.loc[pos_df["sub"] == sub]
+                    ax.plot(
+                        pos_sub_df["position"],
+                        pos_sub_df["downsample"],
+                        label=sub + "+",
+                        linestyle="None",
+                        marker="^",
+                        color=color,
+                        alpha=0.5,
+                    )
+                if neg:
+                    neg_sub_df = neg_df.loc[neg_df["sub"] == sub]
+                    ax.plot(
+                        neg_sub_df["position"],
+                        neg_sub_df["downsample"],
+                        label=sub + "-",
+                        linestyle="None",
+                        marker="v",
+                        color=color,
+                        alpha=0.5,
+                    )
+            ax.ticklabel_format(useOffset=False, style="plain")
+            ax.set(xlabel="position", ylabel="downsampled errors", yscale="log")
+
             axtwin = ax.twinx()
             axtwin.plot(
-                positions, consensuses, label="consensus", color="black", alpha=0.25
+                consensus_df["position"],
+                consensus_df["num consensus molecules"],
+                label="consensus",
+                color="black",
+                alpha=0.25,
             )
             axtwin.set(ylabel="number of consensus molecules")
+        axs[-1].legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
 
-        fig = base_fig_map[base]
         fig.suptitle("{} {}".format(plot_title, base), size=16, y=0.52)
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
-        fig.savefig("plots\\{}_{}_error_rate.png".format(plot_title, base))
+        fig.savefig(
+            "plots\\downsampled_errors\\{}_{}_downsampled.png".format(plot_title, base)
+        )
+
     plt.close("all")
