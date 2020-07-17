@@ -125,7 +125,6 @@ def percentile(q):
             usecols=["num consensus molecules"],
         )
     ):
-        print(i)
         Ns = chunk["num consensus molecules"].to_numpy()
         Ns = Ns.astype(int)
         Nss.append(Ns)

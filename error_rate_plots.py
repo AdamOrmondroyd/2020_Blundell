@@ -3,7 +3,6 @@ Generates plots of error rates for given genes.
 """
 import numpy as np
 import pandas as pd
-from copy import deepcopy
 import matplotlib.pyplot as plt
 from constants import BASES, CHANGES, base_subs_map, sub_color_map
 from lookup import gene_df, gene_seqs_map, seq_data_df
