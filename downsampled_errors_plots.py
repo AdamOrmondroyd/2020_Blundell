@@ -3,13 +3,12 @@ Generates plots of downsampled errors for given genes.
 """
 import numpy as np
 import pandas as pd
-import os
 import matplotlib.pyplot as plt
 from constants import BASES, CHANGES, base_subs_map, sub_color_map
 from lookup import gene_df, gene_seqs_map, seq_data_df
 
-# for gene_number in np.arange(0, 10):
-for gene_number in [0]:
+for gene_number in np.arange(0, 10):
+    # for gene_number in [6]:
     print(gene_number)
     gene = gene_df.loc[gene_number, :]
 
@@ -23,15 +22,34 @@ for gene_number in [0]:
             [consensus_df, seq_data_df(i, group_by="position")]
         ).drop_duplicates(keep="first")
 
-    # Bring in data from pos and neg strands of the gene
+    pos_seq_df = seq_df.loc[seq_df["strand"] == "+"]
+    neg_seq_df = seq_df.loc[seq_df["strand"] == "-"]
+
+    # Bring together the data for each sequence, separated by pos and neg strand, grouped by position
     pos = False
-    if os.path.isfile("data_files\\genes\\gene_{}_pos.csv".format(gene_number)):
+    if len(pos_seq_df.index):
         pos = True
-        pos_df = pd.read_csv("data_files\\genes\\gene_{}_pos.csv".format(gene_number))
-    neg = False
-    if os.path.isfile("data_files\\genes\\gene_{}_neg.csv".format(gene_number)):
+        pos_df = pd.DataFrame()
+        for i in pos_seq_df.index:
+            pos_df = pd.concat(
+                [pos_df, seq_data_df(i, group_by="position")]
+            ).drop_duplicates(keep=False)
+
+    negative = False
+    if len(neg_seq_df.index):
         neg = True
-        neg_df = pd.read_csv("data_files\\genes\\gene_{}_neg.csv".format(gene_number))
+        neg_df = pd.DataFrame()
+        for i in neg_seq_df.index:
+            neg_df = pd.concat(
+                [neg_df, seq_data_df(i, group_by="position")]
+            ).drop_duplicates(keep=False)
+
+    # Drop rows that appear in the other strand
+    if pos and neg:
+        pos_cond = ~pos_df["position"].isin(neg_df["position"])
+        neg_cond = ~neg_df["position"].isin(pos_df["position"])
+        pos_df = pos_df.loc[pos_cond, :]
+        neg_df = neg_df.loc[neg_cond, :]
 
     # Make up plot title
     for strand in seq_df["strand"]:
@@ -91,9 +109,8 @@ for gene_number in [0]:
         fig.suptitle("{} {}".format(plot_title, base), size=16, y=0.52)
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
-        # fig.savefig(
-        #     "plots\\downsampled_errors\\{}_{}_downsampled.png".format(plot_title, base)
-        # )
-        plt.show()
+        fig.savefig(
+            "plots\\downsampled_errors\\{}_{}_downsampled.png".format(plot_title, base)
+        )
 
     plt.close("all")
