@@ -191,6 +191,49 @@ def group_by_ID(sequence_number):
     )
 
 
+def group_strands(gene_number):
+    """
+    Groups data for given gene into that from the positive and negative strand, results stored as csv.
+
+    Data from the overlaps is dropped.
+    """
+    gene = gene_df.loc[gene_number, :]
+    seq_df = gene_seqs_map[gene_number]
+    # Bring together the data for each sequence, separated by pos and neg strand, grouped by position
+    pos = False
+    pos_seq_df = seq_df.loc[seq_df["strand"] == "+"]
+    neg_seq_df = seq_df.loc[seq_df["strand"] == "-"]
+
+    if len(pos_seq_df.index):
+        pos = True
+        pos_df = pd.DataFrame()
+        for i in pos_seq_df.index:
+            pos_df = pd.concat(
+                [pos_df, seq_data_df(i, group_by="position")]
+            ).drop_duplicates(keep=False)
+
+    negative = False
+    if len(neg_seq_df.index):
+        neg = True
+        neg_df = pd.DataFrame()
+        for i in neg_seq_df.index:
+            neg_df = pd.concat(
+                [neg_df, seq_data_df(i, group_by="position")]
+            ).drop_duplicates(keep=False)
+
+    # Drop rows that appear in the other strand
+    if pos and neg:
+        pos_cond = ~pos_df["position"].isin(neg_df["position"])
+        neg_cond = ~neg_df["position"].isin(pos_df["position"])
+        pos_df = pos_df.loc[pos_cond, :]
+        neg_df = neg_df.loc[neg_cond, :]
+
+    if pos:
+        pos_df.to_csv("data_files\\genes\\gene_{}_pos.csv".format(gene_number))
+    if neg:
+        neg_df.to_csv("data_files\\genes\\gene_{}_neg.csv".format(gene_number))
+
+
 def group_by_position_wrapper():
     """
     Repeats group by position for all sequences.
