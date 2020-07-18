@@ -179,15 +179,6 @@ def group_by_position(sequence_number):
     )
 
 
-def group_by_position_wrapper():
-    """
-    Repeats group by position for all sequences.
-    """
-    for i in np.arange(0, 1063):
-        group_by_position(i)
-        print(i)
-
-
 def group_by_ID(sequence_number):
     """
     Groups the specified sequence by ID (person and age).
@@ -198,6 +189,15 @@ def group_by_ID(sequence_number):
     df.to_csv(
         "data_files\\sequences_by_ID\\seq_{}_group_ID.csv".format(sequence_number)
     )
+
+
+def group_by_position_wrapper():
+    """
+    Repeats group by position for all sequences.
+    """
+    for i in np.arange(0, 1063):
+        group_by_position(i)
+        print(i)
 
 
 def group_by_ID_wrapper():
