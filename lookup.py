@@ -212,7 +212,7 @@ def group_strands(gene_number):
                 [pos_df, seq_data_df(i, group_by="position")]
             ).drop_duplicates(keep=False)
 
-    negative = False
+    neg = False
     if len(neg_seq_df.index):
         neg = True
         neg_df = pd.DataFrame()
@@ -277,3 +277,12 @@ def empty_sequences():
         for j, seq in gene_seqs_map[i].iterrows():
             if 0 == len(seq_data_df(j).index):
                 print("Empty sequence found, gene {} sequence {}".format(i, j))
+
+
+def group_strands_wrapper():
+    """
+    Repeats group strands for all genes
+    """
+    for i in np.arange(len(gene_df.index)):
+        print(i)
+        group_strands(i)

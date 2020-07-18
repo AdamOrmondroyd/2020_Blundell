@@ -4,3 +4,4 @@ env_blundell/
 literature/
 paperwork/
 plots/
+__pycache__/

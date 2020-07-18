@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 from constants import BASES, CHANGES, base_subs_map, sub_color_map
 from lookup import gene_df, gene_seqs_map, seq_data_df
 
-# for gene_number in np.arange(0, 10):
-for gene_number in [0]:
+for gene_number in np.arange(0, 10):
+    # for gene_number in [0]:
     print(gene_number)
     gene = gene_df.loc[gene_number, :]
 
@@ -91,9 +91,8 @@ for gene_number in [0]:
         fig.suptitle("{} {}".format(plot_title, base), size=16, y=0.52)
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
-        # fig.savefig(
-        #     "plots\\downsampled_errors\\{}_{}_downsampled.png".format(plot_title, base)
-        # )
-        plt.show()
+        fig.savefig(
+            "plots\\downsampled_errors\\{}_{}_downsampled.png".format(plot_title, base)
+        )
 
     plt.close("all")
