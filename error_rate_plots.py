@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from constants import BASES, CHANGES, base_subs_map, sub_color_map
 from lookup import gene_df, gene_seqs_map, seq_data_df
 
+downsample = False
+
 for gene_number in np.arange(0, 10):
     # for gene_number in [0]:
     print(gene_number)
@@ -52,30 +54,60 @@ for gene_number in np.arange(0, 10):
                 else:
                     color = "lightgrey"
 
-                if pos:
-                    pos_sub_df = pos_df.loc[pos_df["sub"] == sub]
-                    ax.plot(
-                        pos_sub_df["position"],
-                        pos_sub_df["num subs"] / pos_sub_df["num consensus molecules"],
-                        label=sub + "+",
-                        linestyle="None",
-                        marker="^",
-                        color=color,
-                        alpha=0.5,
-                    )
-                if neg:
-                    neg_sub_df = neg_df.loc[neg_df["sub"] == sub]
-                    ax.plot(
-                        neg_sub_df["position"],
-                        neg_sub_df["num subs"] / neg_sub_df["num consensus molecules"],
-                        label=sub + "-",
-                        linestyle="None",
-                        marker="v",
-                        color=color,
-                        alpha=0.5,
-                    )
+                if downsample:
+                    if pos:
+                        pos_sub_df = pos_df.loc[pos_df["sub"] == sub]
+                        ax.plot(
+                            pos_sub_df["position"],
+                            pos_sub_df["downsample"],
+                            label=sub + "+",
+                            linestyle="None",
+                            marker="^",
+                            color=color,
+                            alpha=0.5,
+                        )
+                    if neg:
+                        neg_sub_df = neg_df.loc[neg_df["sub"] == sub]
+                        ax.plot(
+                            neg_sub_df["position"],
+                            neg_sub_df["downsample"],
+                            label=sub + "-",
+                            linestyle="None",
+                            marker="v",
+                            color=color,
+                            alpha=0.5,
+                        )
+                else:
+                    if pos:
+                        pos_sub_df = pos_df.loc[pos_df["sub"] == sub]
+                        ax.plot(
+                            pos_sub_df["position"],
+                            pos_sub_df["num subs"]
+                            / pos_sub_df["num consensus molecules"],
+                            label=sub + "+",
+                            linestyle="None",
+                            marker="^",
+                            color=color,
+                            alpha=0.5,
+                        )
+                    if neg:
+                        neg_sub_df = neg_df.loc[neg_df["sub"] == sub]
+                        ax.plot(
+                            neg_sub_df["position"],
+                            neg_sub_df["num subs"]
+                            / neg_sub_df["num consensus molecules"],
+                            label=sub + "-",
+                            linestyle="None",
+                            marker="v",
+                            color=color,
+                            alpha=0.5,
+                        )
             ax.ticklabel_format(useOffset=False, style="plain")
-            ax.set(xlabel="position", ylabel="error rate", yscale="log")
+
+            if downsample:
+                ax.set(xlabel="position", ylabel="downsampled errors", yscale="log")
+            else:
+                ax.set(xlabel="position", ylabel="error rate", yscale="log")
 
             axtwin = ax.twinx()
             axtwin.plot(
@@ -91,6 +123,15 @@ for gene_number in np.arange(0, 10):
         fig.suptitle("{} {}".format(plot_title, base), size=16, y=0.52)
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
-        fig.savefig("plots\\error_rates\\{}_{}_error_rate.png".format(plot_title, base))
+        if downsample:
+            fig.savefig(
+                "plots\\downsampled_errors\\{}_{}_downsampled.png".format(
+                    plot_title, base
+                )
+            )
+        else:
+            fig.savefig(
+                "plots\\error_rates\\{}_{}_error_rate.png".format(plot_title, base)
+            )
 
     plt.close("all")
