@@ -8,10 +8,15 @@ import matplotlib.pyplot as plt
 from constants import BASES, CHANGES, base_subs_map, sub_color_map
 from lookup import gene_df, gene_seqs_map, seq_data_df
 
-downsample = False
 
-for gene_number in np.arange(0, 10):
-    # for gene_number in [0]:
+def gene_error_plot(gene_number, downsample=True):
+    """
+    Saves plots of errors for a given gene, separating + and - strand data.
+
+    downsample = True will plot the downsampled number of errors.
+    downsample = False will plot the error rate for the full number of errors.
+    """
+
     print(gene_number)
     gene = gene_df.loc[gene_number, :]
 
