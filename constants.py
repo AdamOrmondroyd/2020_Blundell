@@ -49,3 +49,19 @@ PEOPLE = np.char.add(a, b)
 
 def id_age_map(sample_id):
     return lane_age_map[sample_id[:5]]
+
+
+sub_complement_map = {
+    "AC": "TG",
+    "AG": "TC",
+    "AT": "TA",
+    "CA": "GT",
+    "CG": "GC",
+    "CT": "GA",
+    "GA": "CT",
+    "GC": "CG",
+    "GT": "CA",
+    "TA": "AT",
+    "TC": "AG",
+    "TG": "AC",
+}

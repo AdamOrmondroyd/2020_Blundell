@@ -6,7 +6,7 @@ Contains functions for accessing the ALSPAC data using Pandas dataframes.
 import numpy as np
 import pandas as pd
 import os
-from constants import CHANGES, CHUNKSIZE, LANES, PEOPLE
+from constants import CHANGES, CHUNKSIZE, LANES, PEOPLE, sub_complement_map
 
 
 sample_column_names = [
@@ -286,3 +286,31 @@ def group_strands_wrapper():
     for i in np.arange(len(gene_df.index)):
         print(i)
         group_strands(i)
+
+
+def trim_and_flip(gene_number):
+    """
+    Flips neg data to be what the actual change was.
+
+    The called changes are all relative to the top strand. This function creates files which identify the actual sub seen.
+    """
+    seqs = gene_seqs_map[gene_number]
+    next_df = seq_data_df(seqs.index[0])
+    if len(seqs.index) >= 2:
+        for i in seqs.index[:-1]:
+            df = next_df
+            next_df = seq_data_df(i + 1)
+            cond = ~df["position"].isin(next_df["position"])
+            next_cond = ~next_df["position"].isin(df["position"])
+            df = df.loc[cond, :]
+            next_df = next_df.loc[next_cond, :]
+            if seq_df.at[i, "strand"] == "-":
+                df = df.replace({"sub": sub_complement_map})
+            df.to_csv(
+                "data_files\\trimmed_and_flipped_sequences\\seq_{}_t&f.csv".format(i)
+            )
+        next_df.to_csv(
+            "data_files\\trimmed_and_flipped_sequences\\seq_{}_t&f.csv".format(
+                seqs.index[-1]
+            )
+        )
