@@ -11,7 +11,7 @@ from constants import BASES, CHANGES, base_subs_map, sub_color_map
 from lookup import gene_df, gene_seqs_map, seq_data_df
 
 
-def gene_error_plot(gene_number, downsample=True):
+def gene_error_plot_flipped(gene_number, downsample=True):
     """
     Saves plots of errors for a given gene, separating + and - strand data.
 
@@ -22,15 +22,15 @@ def gene_error_plot(gene_number, downsample=True):
     print(gene_number)
     gene = gene_df.loc[gene_number, :]
 
-    plot_title = "Gene {} ".format(gene_number)
+    plot_title = "Gene {} flipped ".format(gene_number)
 
     seq_df = gene_seqs_map[gene_number]
 
     df = pd.DataFrame()
     for i in seq_df.index:
-        df = pd.concat(
-            [df, seq_data_df(i, group_by="position", trimmed_and_flipped=False)]
-        ).drop_duplicates(keep="first")
+        df = pd.concat([df, seq_data_df(i, group_by="position")]).drop_duplicates(
+            keep="first"
+        )
 
     # Make up plot title
     for strand in seq_df["strand"]:
@@ -52,7 +52,9 @@ def gene_error_plot(gene_number, downsample=True):
                     color = "lightgrey"
 
                 sub_df = df.loc[df["sub"] == sub]
+
                 if downsample:
+
                     ax.plot(
                         sub_df["position"],
                         sub_df["downsample"],

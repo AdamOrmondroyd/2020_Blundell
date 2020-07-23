@@ -1,3 +1,6 @@
+"""
+Histogram of the number of sequences in each gene.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 from lookup import gene_seqs_map
