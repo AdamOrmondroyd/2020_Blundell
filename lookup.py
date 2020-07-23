@@ -16,9 +16,6 @@ sample_column_names = [
     "num subs",
     "num consensus molecules",
     "sample ID",
-    "person ID",
-    "age",
-    "rep",
 ]
 
 
