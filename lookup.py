@@ -27,7 +27,7 @@ gene_df = pd.read_csv(
     sep="\t",
 )
 
-
+# DataFrame of sequence information
 seq_df = pd.read_csv(
     "data_files\\Caroline_sequences.bed",
     header=None,
@@ -45,85 +45,7 @@ for i, gene in gene_df.iterrows():
     ]
 
 
-def seq_data_df(sequence_number, group_by=None, trimmed_and_flipped=True):
-    """
-    Returns DataFrame from seq_(sequence_number).csv.
-
-    group_by = "position" combines samples at the same position.
-    group_by = "ID" combines samples with the same ID (person and age)
-    Both grouping options use the trimmed and flipped data by default.
-    """
-    if trimmed_and_flipped:
-        if group_by == "position":
-            return pd.read_csv(
-                "data_files\\sequences_by_position_t&f\\seq_{}_group_positions_t&f.csv".format(
-                    sequence_number
-                )
-            )
-        elif group_by == "ID":
-            return pd.read_csv(
-                "data_files\\sequences_by_ID_t&f\\seq_{}_group_ID_t&f.csv".format(
-                    sequence_number
-                )
-            )
-        else:
-            return pd.read_csv(
-                "data_files\\sequences_t&f\\seq_{}_t&f.csv".format(sequence_number),
-                index_col=0,
-            )
-    else:
-        if group_by == "position":
-            return pd.read_csv(
-                "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
-                    sequence_number
-                )
-            )
-        elif group_by == "ID":
-            return pd.read_csv(
-                "data_files\\sequences_by_ID\\seq_{}_group_ID.csv".format(
-                    sequence_number
-                )
-            )
-        else:
-            return pd.read_csv(
-                "data_files\\sequences\\seq_{}.csv".format(sequence_number), index_col=0
-            )
-
-
-def separating_sequences(sequence_numbers):
-    """
-    Separates the sequences in full_data.txt by the sequences in Caroline's file.
-
-    sequence_numbers = list of sequences to produce files for.
-
-    Note: cannot do all sequences at once.
-    """
-    reduced_seq_df = seq_df.loc[sequence_numbers]
-    seq_dfs = []
-    for i in range(len(sequence_numbers)):
-        seq_dfs.append(pd.DataFrame(columns=sample_column_names))
-
-    for j, chunk in enumerate(
-        pd.read_csv(
-            "data_files\\downsampled_data.txt", chunksize=CHUNKSIZE, index_col=0
-        )
-    ):
-        print("chunk {}".format(j))
-        for i, (k, sequence) in zip(
-            range(sequence_numbers.size), reduced_seq_df.iterrows()
-        ):
-            # print("sequence {}".format(i))
-
-            seq_dfs[i] = seq_dfs[i].append(
-                chunk.loc[
-                    (chunk["position"] >= sequence["start"])
-                    & (chunk["position"] <= sequence["end"])
-                ],
-                ignore_index=True,
-            )
-
-    for i, df in zip(sequence_numbers, seq_dfs):
-        df.to_csv("data_files\\sequences\\seq_{}.csv".format(i))
+### Preparing files ###
 
 
 def percentile(q):
@@ -177,11 +99,92 @@ def downsample(q=50):
         header = False
 
 
+def separating_sequences(sequence_numbers):
+    """
+    Separates the sequences in full_data.txt by the sequences in Caroline's file.
+
+    sequence_numbers = list of sequences to produce files for.
+
+    Note: cannot do all sequences at once.
+    """
+    reduced_seq_df = seq_df.loc[sequence_numbers]
+    seq_dfs = []
+    for i in range(len(sequence_numbers)):
+        seq_dfs.append(pd.DataFrame(columns=sample_column_names))
+
+    for j, chunk in enumerate(
+        pd.read_csv(
+            "data_files\\downsampled_data.txt", chunksize=CHUNKSIZE, index_col=0
+        )
+    ):
+        print("chunk {}".format(j))
+        for i, (k, sequence) in zip(
+            range(sequence_numbers.size), reduced_seq_df.iterrows()
+        ):
+            # print("sequence {}".format(i))
+
+            seq_dfs[i] = seq_dfs[i].append(
+                chunk.loc[
+                    (chunk["position"] >= sequence["start"])
+                    & (chunk["position"] <= sequence["end"])
+                ],
+                ignore_index=True,
+            )
+
+    for i, df in zip(sequence_numbers, seq_dfs):
+        df.to_csv("data_files\\sequences\\seq_{}.csv".format(i))
+
+
 aggregation_functions = {
     "num subs": "sum",
     "num consensus molecules": "sum",
     "downsample": "sum",
 }
+
+
+def seq_data_df(sequence_number, group_by=None, trimmed_and_flipped=True):
+    """
+    Returns DataFrame from seq_(sequence_number).csv.
+
+    group_by = "position" combines samples at the same position.
+    group_by = "ID" combines samples with the same ID (person and age)
+    Both grouping options use the trimmed and flipped data by default.
+    """
+    if trimmed_and_flipped:
+        if group_by == "position":
+            return pd.read_csv(
+                "data_files\\sequences_by_position_t&f\\seq_{}_group_positions_t&f.csv".format(
+                    sequence_number
+                )
+            )
+        elif group_by == "ID":
+            return pd.read_csv(
+                "data_files\\sequences_by_ID_t&f\\seq_{}_group_ID_t&f.csv".format(
+                    sequence_number
+                )
+            )
+        else:
+            return pd.read_csv(
+                "data_files\\sequences_t&f\\seq_{}_t&f.csv".format(sequence_number),
+                index_col=0,
+            )
+    else:
+        if group_by == "position":
+            return pd.read_csv(
+                "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
+                    sequence_number
+                )
+            )
+        elif group_by == "ID":
+            return pd.read_csv(
+                "data_files\\sequences_by_ID\\seq_{}_group_ID.csv".format(
+                    sequence_number
+                )
+            )
+        else:
+            return pd.read_csv(
+                "data_files\\sequences\\seq_{}.csv".format(sequence_number), index_col=0
+            )
 
 
 def group_by_position(sequence_number, trimmed_and_flipped=True):
