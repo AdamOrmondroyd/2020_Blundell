@@ -16,16 +16,11 @@ sample_column_names = [
     "num subs",
     "num consensus molecules",
     "sample ID",
+    "person ID",
+    "age",
+    "rep",
 ]
 
-
-# DataFrame of people and their lanes
-id_df = pd.read_csv(
-    "data_files\\id.txt",
-    header=None,
-    names=["lane1", "lane2", "lane3", "lane4", "ID"],
-    index_col=-1,
-)
 
 # Dataframe of genes
 gene_df = pd.read_csv(
