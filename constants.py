@@ -65,3 +65,20 @@ sub_complement_map = {
     "TC": "AG",
     "TG": "AC",
 }
+
+data_location = "C:\\Users\\Adam\\Programming_files\\2020_Blundell_data_files"
+file_names = {
+    "data": data_location + "\\full_data.txt",
+    "downsampled data": data_location + "\\downsampled_data.txt",
+    "Wing genes": data_location + "\\Wing_genes.bed",
+    "Caroline seqs": data_location + "\\Caroline_sequences.bed",
+    "seq": data_location + "\\sequences\\seq_{}.csv",
+    "seq group IDs": data_location + "\\sequences_by_ID\\seq_{}_group_ID.csv",
+    "seq group positions": data_location
+    + "\\sequences_by_position\\seq_{}_group_positions.csv",
+    "seq t&f": data_location + "\\sequences_t&f\\seq_{}_t&f.csv",
+    "seq group IDs t&f": data_location
+    + "\\sequences_by_ID_t&f\\seq_{}_group_ID_t&f.csv",
+    "seq group positions t&f": data_location
+    + "\\sequences_by_position_t&f\\seq_{}_group_positions_t&f.csv",
+}

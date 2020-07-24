@@ -6,7 +6,7 @@ Contains functions for accessing the ALSPAC data using Pandas dataframes.
 import numpy as np
 import pandas as pd
 import os
-from constants import CHANGES, CHUNKSIZE, LANES, PEOPLE, sub_complement_map
+from constants import CHANGES, CHUNKSIZE, file_names, LANES, PEOPLE, sub_complement_map
 
 
 sample_column_names = [
@@ -21,7 +21,7 @@ sample_column_names = [
 
 # Dataframe of genes
 gene_df = pd.read_csv(
-    "data_files\\Wing_genes.bed",
+    file_names["Wing genes"],
     header=None,
     names=["chromosome", "start", "end"],
     sep="\t",
@@ -29,7 +29,7 @@ gene_df = pd.read_csv(
 
 # DataFrame of sequence information
 seq_df = pd.read_csv(
-    "data_files\\Caroline_sequences.bed",
+    file_names["Caroline seqs"],
     header=None,
     names=["chromosome", "start", "end", "who tf knows", "length", "strand"],
     sep="\t",
@@ -55,7 +55,7 @@ def percentile(q):
     Nss = []
     for i, chunk in enumerate(
         pd.read_csv(
-            "data_files\\full_data.txt",
+            file_names["data"],
             chunksize=CHUNKSIZE,
             header=None,
             names=sample_column_names,
@@ -76,15 +76,15 @@ def downsample(q=50):
 
     Defaults to 50th percentile
     """
-    if os.path.isfile("data_files\\downsampled_data.txt"):
-        os.remove("data_files\\downsampled_data.txt")
+    if os.path.isfile(file_names["downsampled data"]):
+        os.remove(file_names["downsampled data"])
     rng = np.random.default_rng()
     header = True
     N_0 = percentile(q)
     print("Downsampled to {} consensus molecules".format(N_0))
     for i, chunk in enumerate(
         pd.read_csv(
-            "data_files\\full_data.txt",
+            file_names["data"],
             chunksize=CHUNKSIZE,
             header=None,
             names=sample_column_names,
@@ -95,7 +95,7 @@ def downsample(q=50):
         chunk["downsample"] = rng.binomial(
             n=N_0, p=chunk["num subs"] / chunk["num consensus molecules"]
         )
-        chunk.to_csv("data_files\\downsampled_data.txt", mode="a", header=header)
+        chunk.to_csv(file_names["downsampled data"], mode="a", header=header)
         header = False
 
 
@@ -113,9 +113,7 @@ def separating_sequences(sequence_numbers):
         seq_dfs.append(pd.DataFrame(columns=sample_column_names))
 
     for j, chunk in enumerate(
-        pd.read_csv(
-            "data_files\\downsampled_data.txt", chunksize=CHUNKSIZE, index_col=0
-        )
+        pd.read_csv(file_names["downsampled data"], chunksize=CHUNKSIZE, index_col=0)
     ):
         print("chunk {}".format(j))
         for i, (k, sequence) in zip(
@@ -132,7 +130,7 @@ def separating_sequences(sequence_numbers):
             )
 
     for i, df in zip(sequence_numbers, seq_dfs):
-        df.to_csv("data_files\\sequences\\seq_{}.csv".format(i))
+        df.to_csv(file_names["seq"].format(i))
 
 
 aggregation_functions = {
@@ -151,40 +149,25 @@ def seq_data_df(sequence_number, group_by=None, trimmed_and_flipped=True):
     Both grouping options use the trimmed and flipped data by default.
     """
     if trimmed_and_flipped:
-        if group_by == "position":
+        if group_by == "ID":
+            return pd.read_csv(file_names["seq group IDs t&f"].format(sequence_number))
+        elif group_by == "position":
             return pd.read_csv(
-                "data_files\\sequences_by_position_t&f\\seq_{}_group_positions_t&f.csv".format(
-                    sequence_number
-                )
-            )
-        elif group_by == "ID":
-            return pd.read_csv(
-                "data_files\\sequences_by_ID_t&f\\seq_{}_group_ID_t&f.csv".format(
-                    sequence_number
-                )
+                file_names["seq group positions t&f"].format(sequence_number)
             )
         else:
             return pd.read_csv(
-                "data_files\\sequences_t&f\\seq_{}_t&f.csv".format(sequence_number),
-                index_col=0,
+                file_names["seq t&f"].format(sequence_number), index_col=0,
             )
     else:
-        if group_by == "position":
+        if group_by == "ID":
+            return pd.read_csv(file_names["seq group IDs"].format(sequence_number))
+        elif group_by == "position":
             return pd.read_csv(
-                "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
-                    sequence_number
-                )
-            )
-        elif group_by == "ID":
-            return pd.read_csv(
-                "data_files\\sequences_by_ID\\seq_{}_group_ID.csv".format(
-                    sequence_number
-                )
+                file_names["seq group positions"].format(sequence_number)
             )
         else:
-            return pd.read_csv(
-                "data_files\\sequences\\seq_{}.csv".format(sequence_number), index_col=0
-            )
+            return pd.read_csv(file_names["seq"].format(sequence_number), index_col=0)
 
 
 def group_by_position(sequence_number, trimmed_and_flipped=True):
@@ -195,17 +178,9 @@ def group_by_position(sequence_number, trimmed_and_flipped=True):
     df = df.drop(columns=["sample ID"])
     df = df.groupby(["position", "chromosome", "sub"]).agg(aggregation_functions)
     if trimmed_and_flipped:
-        df.to_csv(
-            "data_files\\sequences_by_position_t&f\\seq_{}_group_positions_t&f.csv".format(
-                sequence_number
-            )
-        )
+        df.to_csv(file_names["seq group positions t&f"].format(sequence_number))
     else:
-        df.to_csv(
-            "data_files\\sequences_by_position\\seq_{}_group_positions.csv".format(
-                sequence_number
-            )
-        )
+        df.to_csv(file_names["seq group positions"].format(sequence_number))
 
 
 def group_by_ID(sequence_number, trimmed_and_flipped=True):
@@ -216,15 +191,9 @@ def group_by_ID(sequence_number, trimmed_and_flipped=True):
     df = df.drop(columns=["position"])
     df = df.groupby(["sample ID", "chromosome", "sub"]).agg(aggregation_functions)
     if trimmed_and_flipped:
-        df.to_csv(
-            "data_files\\sequences_by_ID_t&f\\seq_{}_group_ID_t&f.csv".format(
-                sequence_number
-            )
-        )
+        df.to_csv(file_names["seq group IDs t&f"].format(sequence_number))
     else:
-        df.to_csv(
-            "data_files\\sequences_by_ID\\seq_{}_group_ID.csv".format(sequence_number)
-        )
+        df.to_csv(file_names["seq group IDs"].format(sequence_number))
 
 
 def trim_and_flip(gene_number):
@@ -245,8 +214,8 @@ def trim_and_flip(gene_number):
             next_df = next_df.loc[next_cond, :]
             if seq_df.at[i, "strand"] == "-":
                 df = df.replace({"sub": sub_complement_map})
-            df.to_csv("data_files\\sequences_t&f\\seq_{}_t&f.csv".format(i))
-    next_df.to_csv("data_files\\sequences_t&f\\seq_{}_t&f.csv".format(seqs.index[-1]))
+            df.to_csv(file_names["seq group positions t&f"].format(i))
+    next_df.to_csv(file_names["seq group positions t&f"].format(seqs.index[-1]))
 
 
 ### Wrappers ###
