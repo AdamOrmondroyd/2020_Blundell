@@ -67,8 +67,10 @@ sub_complement_map = {
 }
 
 data_location = "C:\\Users\\Adam\\Programming_files\\2020_Blundell_data_files"
+main_data_file = "\\full_data.txt"
+# main_data_file = "\\alspac.all.cleaned.sorted.out"
 file_names = {
-    "data": data_location + "\\full_data.txt",
+    "data": data_location + main_data_file,
     "downsampled data": data_location + "\\downsampled_data.txt",
     "Wing genes": data_location + "\\Wing_genes.bed",
     "Caroline seqs": data_location + "\\Caroline_sequences.bed",
