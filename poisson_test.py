@@ -57,8 +57,8 @@ def plot_all_mean_var():
         ax[1].set(title="variances", xlabel="sequence", ylabel="variance", yscale="log")
         ax[2].set(title="ratios", xlabel="sequence", ylabel="ratios", yscale="log")
         fig.tight_layout()
-        # fig.savefig("plots\\means_and_variances\\{}_mean_var.png".format(sub))
-        plt.show()
+        fig.savefig("plots\\means_and_variances\\{}_mean_var.png".format(sub))
+        # plt.show()
         plt.close("all")
 
 
