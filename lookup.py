@@ -6,7 +6,15 @@ Contains functions for accessing the ALSPAC data using Pandas dataframes.
 import numpy as np
 import pandas as pd
 import os
-from constants import CHANGES, CHUNKSIZE, file_names, LANES, PEOPLE, sub_complement_map
+from constants import (
+    SUBS,
+    CHUNKSIZE,
+    file_names,
+    LANES,
+    PEOPLE,
+    sub_complement_map,
+    vec_sorter,
+)
 
 
 sample_column_names = [
@@ -17,33 +25,6 @@ sample_column_names = [
     "num consensus molecules",
     "sample ID",
 ]
-
-
-# Dataframe of genes
-gene_df = pd.read_csv(
-    file_names["Wing genes"],
-    header=None,
-    names=["chromosome", "start", "end"],
-    sep="\t",
-)
-
-# DataFrame of sequence information
-seq_df = pd.read_csv(
-    file_names["Caroline seqs"],
-    header=None,
-    names=["chromosome", "start", "end", "who tf knows", "length", "strand"],
-    sep="\t",
-)
-seq_df.sort_values(
-    "chromosome", inplace=True, kind="mergesort", ignore_index=True
-)  # use mergesort for stability
-
-gene_seqs_map = {}
-for i, gene in gene_df.iterrows():
-    gene_seqs_map[i] = seq_df.loc[
-        (seq_df["start"] >= gene["start"]) & (seq_df["end"] <= gene["end"])
-    ]
-
 
 ### Preparing files ###
 
@@ -97,6 +78,24 @@ def downsample(q=50):
         )
         chunk.to_csv(file_names["downsampled data"], mode="a", header=header)
         header = False
+
+
+def sort_caroline_seqs():
+    """
+    Orders data from Caroline by chromosome.
+    """
+    df = pd.read_csv(
+        file_names["Caroline seqs"],
+        header=None,
+        names=["chromosome", "start", "end", "who tf knows", "length", "strand"],
+        sep="\t",
+    )
+    df["chromosome"] = df["chromosome"].str[3:]
+    df = df.sort_values(
+        by="chromosome", kind="mergesort", key=vec_sorter, ignore_index=True,
+    )  # use mergesort for stability
+
+    df.to_csv(file_names["Caroline seqs sorted"], sep="\t")
 
 
 def separating_sequences(sequence_numbers):
@@ -289,11 +288,33 @@ def refresh_data(redownsample=False):
     if redownsample:
         downsample()
         separating_sequences_wrapper()
+    sort_caroline_seqs()
     group_by_ID_wrapper(trimmed_and_flipped=False)
     group_by_position_wrapper(trimmed_and_flipped=False)
     trim_and_flip_wrapper()
     group_by_ID_wrapper()
     group_by_position_wrapper()
+
+
+### Dataframes ###
+
+
+# Dataframe of genes
+gene_df = pd.read_csv(
+    file_names["Wing genes"],
+    header=None,
+    names=["chromosome", "start", "end"],
+    sep="\t",
+)
+
+# DataFrame of sequence information
+seq_df = pd.read_csv(file_names["Caroline seqs sorted"], sep="\t", index_col=0)
+
+gene_seqs_map = {}
+for i, gene in gene_df.iterrows():
+    gene_seqs_map[i] = seq_df.loc[
+        (seq_df["start"] >= gene["start"]) & (seq_df["end"] <= gene["end"])
+    ]
 
 
 ### Miscellaneous ###

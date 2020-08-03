@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-from constants import BASES, CHANGES, base_subs_map, sub_color_map
+from constants import BASES, base_subs_map, sub_color_map
 from lookup import gene_df, gene_seqs_map, seq_data_df
 
 
