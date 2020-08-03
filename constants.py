@@ -12,14 +12,14 @@ BASES = np.array(["A", "C", "G", "T"])
 LANES = np.array(["lane1", "lane2", "lane3", "lane4"])
 age_lane_map = {0: "lane1", 7: "lane2", 17: "lane3", 24: "lane4"}
 lane_age_map = {"lane1": 0, "lane2": 7, "lane3": 17, "lane4": 24}
-SUBS = np.array(
+CHANGES = np.array(
     ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
 )
 base_subs_map = {
-    "A": SUBS[:3],
-    "C": SUBS[3:6],
-    "G": SUBS[6:9],
-    "T": SUBS[9:12],
+    "A": CHANGES[:3],
+    "C": CHANGES[3:6],
+    "G": CHANGES[6:9],
+    "T": CHANGES[9:12],
 }
 base_color_map = {
     "A": "red",
@@ -74,7 +74,6 @@ file_names = {
     "downsampled data": data_location + "\\downsampled_data.txt",
     "Wing genes": data_location + "\\Wing_genes.bed",
     "Caroline seqs": data_location + "\\Caroline_sequences.bed",
-    "Caroline seqs sorted": data_location + "\\Caroline_sequences_sorted.txt",
     "seq": data_location + "\\sequences\\seq_{}.csv",
     "seq group IDs": data_location + "\\sequences_by_ID\\seq_{}_group_ID.csv",
     "seq group positions": data_location
@@ -85,15 +84,3 @@ file_names = {
     "seq group positions t&f": data_location
     + "\\sequences_by_position_t&f\\seq_{}_group_positions_t&f.csv",
 }
-
-
-def sorter(chromosome):
-    if chromosome == "X":
-        return 23
-    elif chromosome == "Y":
-        return 24
-    else:
-        return int(chromosome)
-
-
-vec_sorter = np.vectorize(sorter)
