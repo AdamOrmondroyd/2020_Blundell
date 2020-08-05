@@ -139,7 +139,7 @@ aggregation_functions = {
 }
 
 
-def seq_data_df(sequence_number, group_by=None, trimmed_and_flipped=True):
+def seq_data_df(sequence_number, group_by=None, trim_and_flip=True):
     """
     Returns DataFrame from seq_(sequence_number).csv.
 
@@ -147,7 +147,7 @@ def seq_data_df(sequence_number, group_by=None, trimmed_and_flipped=True):
     group_by = "ID" combines samples with the same ID (person and age)
     Both grouping options use the trimmed and flipped data by default.
     """
-    if trimmed_and_flipped:
+    if trim_and_flip:
         if group_by == "ID":
             return pd.read_csv(file_names["seq group IDs t&f"].format(sequence_number))
         elif group_by == "position":
@@ -169,27 +169,27 @@ def seq_data_df(sequence_number, group_by=None, trimmed_and_flipped=True):
             return pd.read_csv(file_names["seq"].format(sequence_number), index_col=0)
 
 
-def group_by_position(sequence_number, trimmed_and_flipped=True):
+def group_by_position(sequence_number, trim_and_flip=True):
     """
     Groups the specified sequence by position.
     """
-    df = seq_data_df(sequence_number, trimmed_and_flipped=trimmed_and_flipped)
+    df = seq_data_df(sequence_number, trim_and_flip=trim_and_flip)
     df = df.drop(columns=["sample ID"])
     df = df.groupby(["position", "chromosome", "sub"]).agg(aggregation_functions)
-    if trimmed_and_flipped:
+    if trim_and_flip:
         df.to_csv(file_names["seq group positions t&f"].format(sequence_number))
     else:
         df.to_csv(file_names["seq group positions"].format(sequence_number))
 
 
-def group_by_ID(sequence_number, trimmed_and_flipped=True):
+def group_by_ID(sequence_number, trim_and_flip=True):
     """
     Groups the specified sequence by ID (person and age).
     """
-    df = seq_data_df(sequence_number, trimmed_and_flipped=trimmed_and_flipped)
+    df = seq_data_df(sequence_number, trim_and_flip=trim_and_flip)
     df = df.drop(columns=["position"])
     df = df.groupby(["sample ID", "chromosome", "sub"]).agg(aggregation_functions)
-    if trimmed_and_flipped:
+    if trim_and_flip:
         df.to_csv(file_names["seq group IDs t&f"].format(sequence_number))
     else:
         df.to_csv(file_names["seq group IDs"].format(sequence_number))
@@ -202,11 +202,11 @@ def trim_and_flip(gene_number):
     The called changes are all relative to the top strand. This function creates files which identify the actual sub seen.
     """
     seqs = gene_seqs_map[gene_number]
-    next_df = seq_data_df(seqs.index[0], trimmed_and_flipped=False)
+    next_df = seq_data_df(seqs.index[0], trim_and_flip=False)
     if len(seqs.index) >= 2:
         for i in seqs.index[:-1]:
             df = next_df
-            next_df = seq_data_df(i + 1, trimmed_and_flipped=False)
+            next_df = seq_data_df(i + 1, trim_and_flip=False)
             cond = ~df["position"].isin(next_df["position"])
             next_cond = ~next_df["position"].isin(df["position"])
             df = df.loc[cond, :]
@@ -220,21 +220,21 @@ def trim_and_flip(gene_number):
 ### Wrappers ###
 
 
-def group_by_position_wrapper(trimmed_and_flipped=True):
+def group_by_position_wrapper(trim_and_flip=True):
     """
     Repeats group by position for all sequences.
     """
     for i in np.arange(0, 1063):
-        group_by_position(i, trimmed_and_flipped)
+        group_by_position(i, trim_and_flip)
         print(i)
 
 
-def group_by_ID_wrapper(trimmed_and_flipped=True):
+def group_by_ID_wrapper(trim_and_flip=True):
     """
     Repeats group by ID for all sequences.
     """
     for i in np.arange(0, 1063):
-        group_by_ID(i, trimmed_and_flipped)
+        group_by_ID(i, trim_and_flip)
         print(i)
 
 
@@ -289,8 +289,8 @@ def refresh_data(redownsample=False):
         downsample()
         separating_sequences_wrapper()
     sort_caroline_seqs()
-    group_by_ID_wrapper(trimmed_and_flipped=False)
-    group_by_position_wrapper(trimmed_and_flipped=False)
+    group_by_ID_wrapper(trim_and_flip=False)
+    group_by_position_wrapper(trim_and_flip=False)
     trim_and_flip_wrapper()
     group_by_ID_wrapper()
     group_by_position_wrapper()

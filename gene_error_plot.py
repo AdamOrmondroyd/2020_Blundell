@@ -1,7 +1,7 @@
 """
 # 2020 Blundell lab internship
 
-Generates plots of error rates for given genes using the flipped data
+Generates plots of error rates for given genes
 """
 import numpy as np
 import pandas as pd
@@ -11,7 +11,7 @@ from constants import BASES, base_subs_map, sub_color_map
 from lookup import gene_df, gene_seqs_map, seq_data_df
 
 
-def gene_error_plot(gene_number, downsample=True):
+def gene_error_plot(gene_number, downsample=True, trim_and_flip=True):
     """
     Saves plots of errors for a given gene, separating + and - strand data.
 
@@ -21,16 +21,22 @@ def gene_error_plot(gene_number, downsample=True):
 
     print(gene_number)
     gene = gene_df.loc[gene_number, :]
-
+    seq_df = gene_seqs_map[gene_number]
+    df = pd.DataFrame()
     plot_title = "Gene {} ".format(gene_number)
 
-    seq_df = gene_seqs_map[gene_number]
+    if trim_and_flip:
+        plot_title += "flipped "
+        for i in seq_df.index:
+            df = pd.concat([df, seq_data_df(i, group_by="position")]).drop_duplicates(
+                keep="first"
+            )
+    else:
 
-    df = pd.DataFrame()
-    for i in seq_df.index:
-        df = pd.concat(
-            [df, seq_data_df(i, group_by="position", trimmed_and_flipped=False)]
-        ).drop_duplicates(keep="first")
+        for i in seq_df.index:
+            df = pd.concat(
+                [df, seq_data_df(i, group_by="position", trim_and_flip=False)]
+            ).drop_duplicates(keep="first")
 
     # Make up plot title
     for strand in seq_df["strand"]:
@@ -101,15 +107,16 @@ def gene_error_plot(gene_number, downsample=True):
         fig.suptitle("{} {}".format(plot_title, base), size=16, y=0.52)
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
-        if downsample:
-            fig.savefig(
-                "plots\\downsampled_errors\\{}_{}_downsampled.png".format(
-                    plot_title, base
-                )
-            )
-        else:
-            fig.savefig(
-                "plots\\error_rates\\{}_{}_error_rate.png".format(plot_title, base)
-            )
+        # if downsample:
+        #     fig.savefig(
+        #         "plots\\downsampled_errors\\{}_{}_downsampled.png".format(
+        #             plot_title, base
+        #         )
+        #     )
+        # else:
+        #     fig.savefig(
+        #         "plots\\error_rates\\{}_{}_error_rate.png".format(plot_title, base)
+        #     )
+        plt.show()
 
     plt.close("all")
