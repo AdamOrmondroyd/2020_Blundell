@@ -5,7 +5,7 @@ Contains constants associated with working with the ALSPAC data.
 """
 import numpy as np
 
-CHUNKSIZE = 10 ** 6
+CHUNKSIZE = 10 ** 4
 
 AGES = np.array([0, 7, 17, 24])
 BASES = np.array(["A", "C", "G", "T"])
@@ -73,21 +73,23 @@ file_names = {
     "data": data_location + main_data_file,
     "downsampled data": data_location + "\\downsampled_data.txt",
     "Wing genes": data_location + "\\Wing_genes.bed",
-    "Caroline seqs": data_location + "\\Caroline_sequences.bed",
-    "Caroline seqs sorted": data_location + "\\Caroline_sequences_sorted.txt",
-    "seq": data_location + "\\sequences\\seq_{}.csv",
-    "seq group IDs": data_location + "\\sequences_by_ID\\seq_{}_group_ID.csv",
-    "seq group positions": data_location
-    + "\\sequences_by_position\\seq_{}_group_positions.csv",
-    "seq t&f": data_location + "\\sequences_t&f\\seq_{}_t&f.csv",
-    "seq group IDs t&f": data_location
-    + "\\sequences_by_ID_t&f\\seq_{}_group_ID_t&f.csv",
-    "seq group positions t&f": data_location
-    + "\\sequences_by_position_t&f\\seq_{}_group_positions_t&f.csv",
+    "Caroline exons": data_location + "\\Caroline_exons.bed",
+    "Caroline exons sorted": data_location + "\\Caroline_exons_sorted.txt",
+    "exon": data_location + "\\exons\\exon_{}.csv",
+    "exon group IDs": data_location + "\\exons_by_ID\\exon_{}_group_ID.csv",
+    "exon group positions": data_location
+    + "\\exons_by_position\\exon_{}_group_positions.csv",
+    "exon t&f": data_location + "\\exons_t&f\\exon_{}_t&f.csv",
+    "exon group IDs t&f": data_location + "\\exons_by_ID_t&f\\exon_{}_group_ID_t&f.csv",
+    "exon group positions t&f": data_location
+    + "\\exons_by_position_t&f\\exon_{}_group_positions_t&f.csv",
 }
 
 
 def sorter(chromosome):
+    """
+    Converts X and Y to 23 and 24 for sorting chromosomes.
+    """
     if chromosome == "X":
         return 23
     elif chromosome == "Y":

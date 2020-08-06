@@ -8,10 +8,10 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 from constants import BASES, base_subs_map, sub_color_map
-from lookup import gene_df, gene_seqs_map, seq_data_df
+from lookup import gene_df, gene_exons_map, exon_data_df
 
 
-def gene_error_plot(gene_number, downsample=True, trim_and_flip=True):
+def gene_error_plot(gene_number, downsample=True, trim_and_flip=True, save=True):
     """
     Saves plots of errors for a given gene, separating + and - strand data.
 
@@ -21,25 +21,25 @@ def gene_error_plot(gene_number, downsample=True, trim_and_flip=True):
 
     print(gene_number)
     gene = gene_df.loc[gene_number, :]
-    seq_df = gene_seqs_map[gene_number]
+    exon_df = gene_exons_map[gene_number]
     df = pd.DataFrame()
     plot_title = "Gene {} ".format(gene_number)
 
     if trim_and_flip:
         plot_title += "flipped "
-        for i in seq_df.index:
-            df = pd.concat([df, seq_data_df(i, group_by="position")]).drop_duplicates(
+        for i in exon_df.index:
+            df = pd.concat([df, exon_data_df(i, group_by="position")]).drop_duplicates(
                 keep="first"
             )
     else:
 
-        for i in seq_df.index:
+        for i in exon_df.index:
             df = pd.concat(
-                [df, seq_data_df(i, group_by="position", trim_and_flip=False)]
+                [df, exon_data_df(i, group_by="position", trim_and_flip=False)]
             ).drop_duplicates(keep="first")
 
     # Make up plot title
-    for strand in seq_df["strand"]:
+    for strand in exon_df["strand"]:
         plot_title += strand
 
     for base in BASES:
@@ -95,11 +95,11 @@ def gene_error_plot(gene_number, downsample=True, trim_and_flip=True):
                 alpha=0.25,
             )
             axtwin.set(ylabel="number of consensus molecules")
-            for i, seq in seq_df.iterrows():
+            for i, exon in exon_df.iterrows():
                 axtwin.plot(
-                    [seq["start"], seq["end"]],
+                    [exon["start"], exon["end"]],
                     [0, 0],
-                    label="seq {}".format(i),
+                    label="exon {}".format(i),
                     marker="|",
                 )
         axs[-1].legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
@@ -107,16 +107,18 @@ def gene_error_plot(gene_number, downsample=True, trim_and_flip=True):
         fig.suptitle("{} {}".format(plot_title, base), size=16, y=0.52)
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
-        # if downsample:
-        #     fig.savefig(
-        #         "plots\\downsampled_errors\\{}_{}_downsampled.png".format(
-        #             plot_title, base
-        #         )
-        #     )
-        # else:
-        #     fig.savefig(
-        #         "plots\\error_rates\\{}_{}_error_rate.png".format(plot_title, base)
-        #     )
+        if save:
+            if downsample:
+                fig.savefig(
+                    "plots\\downsampled_errors\\{}_{}_downsampled.png".format(
+                        plot_title, base
+                    )
+                )
+            else:
+                fig.savefig(
+                    "plots\\error_rates\\{}_{}_error_rate.png".format(plot_title, base)
+                )
+    if ~save:
         plt.show()
 
     plt.close("all")
