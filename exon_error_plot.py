@@ -1,45 +1,45 @@
 """
 # 2020 Blundell lab internship
 
-Generates plots of error rates for given genes
+Generates plots of error rates for given exons
 """
 import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
 from constants import BASES, base_subs_map, sub_color_map
-from lookup import gene_df, gene_exons_map, exon_data_df
+from lookup import exon_df, exon_seqs_map, seq_data_df
 
 
-def gene_error_plot(gene_number, downsample=True, trim_and_flip=True, save=True):
+def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True):
     """
-    Saves plots of errors for a given gene, separating + and - strand data.
+    Saves plots of errors for a given exon, separating + and - strand data.
 
     downsample = True will plot the downsampled number of errors.
     downsample = False will plot the error rate for the full number of errors.
     """
 
-    print(gene_number)
-    gene = gene_df.loc[gene_number, :]
-    exon_df = gene_exons_map[gene_number]
+    print(exon_number)
+    exon = exon_df.loc[exon_number, :]
+    seq_df = exon_seqs_map[exon_number]
     df = pd.DataFrame()
-    plot_title = "Gene {} ".format(gene_number)
+    plot_title = "Gene {} ".format(exon_number)
 
     if trim_and_flip:
         plot_title += "flipped "
-        for i in exon_df.index:
-            df = pd.concat([df, exon_data_df(i, group_by="position")]).drop_duplicates(
+        for i in seq_df.index:
+            df = pd.concat([df, seq_data_df(i, group_by="position")]).drop_duplicates(
                 keep="first"
             )
     else:
 
-        for i in exon_df.index:
+        for i in seq_df.index:
             df = pd.concat(
-                [df, exon_data_df(i, group_by="position", trim_and_flip=False)]
+                [df, seq_data_df(i, group_by="position", trim_and_flip=False)]
             ).drop_duplicates(keep="first")
 
     # Make up plot title
-    for strand in exon_df["strand"]:
+    for strand in seq_df["strand"]:
         plot_title += strand
 
     for base in BASES:
@@ -95,11 +95,11 @@ def gene_error_plot(gene_number, downsample=True, trim_and_flip=True, save=True)
                 alpha=0.25,
             )
             axtwin.set(ylabel="number of consensus molecules")
-            for i, exon in exon_df.iterrows():
+            for i, seq in seq_df.iterrows():
                 axtwin.plot(
-                    [exon["start"], exon["end"]],
+                    [seq["start"], seq["end"]],
                     [0, 0],
-                    label="exon {}".format(i),
+                    label="seq {}".format(i),
                     marker="|",
                 )
         axs[-1].legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")

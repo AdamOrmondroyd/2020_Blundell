@@ -72,17 +72,17 @@ main_data_file = "\\full_data.txt"
 file_names = {
     "data": data_location + main_data_file,
     "downsampled data": data_location + "\\downsampled_data.txt",
-    "Wing genes": data_location + "\\Wing_genes.bed",
-    "Caroline exons": data_location + "\\Caroline_exons.bed",
-    "Caroline exons sorted": data_location + "\\Caroline_exons_sorted.txt",
-    "exon": data_location + "\\exons\\exon_{}.csv",
-    "exon group IDs": data_location + "\\exons_by_ID\\exon_{}_group_ID.csv",
-    "exon group positions": data_location
-    + "\\exons_by_position\\exon_{}_group_positions.csv",
-    "exon t&f": data_location + "\\exons_t&f\\exon_{}_t&f.csv",
-    "exon group IDs t&f": data_location + "\\exons_by_ID_t&f\\exon_{}_group_ID_t&f.csv",
-    "exon group positions t&f": data_location
-    + "\\exons_by_position_t&f\\exon_{}_group_positions_t&f.csv",
+    "Wing exons": data_location + "\\Wing_exons.bed",
+    "Caroline seqs": data_location + "\\Caroline_seqs.bed",
+    "Caroline seqs sorted": data_location + "\\Caroline_seqs_sorted.txt",
+    "seq": data_location + "\\seqs\\seq_{}.csv",
+    "seq group IDs": data_location + "\\seqs_by_ID\\seq_{}_group_ID.csv",
+    "seq group positions": data_location
+    + "\\seqs_by_position\\seq_{}_group_positions.csv",
+    "seq t&f": data_location + "\\seqs_t&f\\seq_{}_t&f.csv",
+    "seq group IDs t&f": data_location + "\\seqs_by_ID_t&f\\seq_{}_group_ID_t&f.csv",
+    "seq group positions t&f": data_location
+    + "\\seqs_by_position_t&f\\seq_{}_group_positions_t&f.csv",
 }
 
 

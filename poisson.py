@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from constants import CHANGES
-from lookup import lookup, exon_df
+from lookup import lookup, seq_df
 
 plot_title = "histogram"
 
-exon = 1
-positions = np.arange(exon_df.at[exon, "start"], exon_df.at[exon, "end"])
-chromosome = exon_df.at[exon, "chromosome"]
+seq = 1
+positions = np.arange(seq_df.at[seq, "start"], seq_df.at[seq, "end"])
+chromosome = seq_df.at[seq, "chromosome"]
 
 df = lookup(chromosome, positions, downsample=True)
 
