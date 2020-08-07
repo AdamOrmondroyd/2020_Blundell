@@ -9,7 +9,7 @@ def mean_var(seq_number, sub, chromosome):
     """
     Returns  of mean and var for a given seq and sub.
     """
-    df = seq_data_df(seq_number, trim_and_flip=True)
+    df = seq_data_df(seq_number, trim_and_flip=False)
     df = df.loc[df["sub"] == sub]
 
     mean = np.mean(df["downsample"])
@@ -17,7 +17,7 @@ def mean_var(seq_number, sub, chromosome):
     return mean, variance
 
 
-def plot_all_mean_var():
+def plot_all_mean_var(save=True):
     for sub in SUBS:
         print(sub)
         fig, ax = plt.subplots(3, figsize=(8, 8))
@@ -94,12 +94,14 @@ def plot_all_mean_var():
         ax[1].set(title="variances", xlabel="seq", ylabel="variance", yscale="log")
         ax[2].set(title="ratios", xlabel="seq", ylabel="ratios", yscale="log")
         fig.tight_layout()
-        # fig.savefig("plots\\means_and_variances\\{}_mean_var.png".format(sub))
-        plt.show()
+        if save:
+            fig.savefig("plots\\means_and_variances\\{}_mean_var.png".format(sub))
+        else:
+            plt.show()
         plt.close("all")
 
 
-def plot_exon_mean_var(exon_number):
+def plot_exon_mean_var(exon_number, save=True):
     df = exon_seqs_map[exon_number]
     means = np.zeros(len(df.index))
     variances = np.zeros(len(df.index))
@@ -121,13 +123,29 @@ def plot_exon_mean_var(exon_number):
         )
         ax[2].set(title="ratios", xlabel="seq", ylabel="ratios", yscale="log")
         fig.tight_layout()
-        # fig.savefig("plots\\means_and_variances\\{}_mean_var.png".format(sub))
-        plt.show()
+        if save:
+            fig.savefig("plots\\means_and_variances\\{}_mean_var.png".format(sub))
+        else:
+            plt.show()
         plt.close("all")
 
 
-def seq_sub_histogram(seq_number):
+def plot_seq_sub_hist(seq_number):
     """
     Plots a histogram of the number of downsampled substitutions for a given seq
     """
+    plot_title = "histogram"
 
+    df = seq_data_df(seq_number)
+
+    for sub in SUBS:
+        print(sub)
+        fig, ax = plt.subplots()
+
+        change_df = df.loc[sub == df["sub"]]
+
+        bins = np.arange(-0.5, np.max(change_df["num subs"]) + 0.5)
+        print(bins)
+        ax.hist(change_df["num subs"], bins=bins)
+        ax.set(title="{}_{}".format(plot_title, sub), yscale="log")
+        plt.show()

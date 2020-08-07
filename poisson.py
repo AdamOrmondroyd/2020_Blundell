@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from constants import CHANGES
-from lookup import lookup, seq_df
+from constants import SUBS
+from lookup import seq_df
 
 plot_title = "histogram"
 
@@ -11,7 +11,7 @@ chromosome = seq_df.at[seq, "chromosome"]
 
 df = lookup(chromosome, positions, downsample=True)
 
-for sub in CHANGES:
+for sub in SUBS:
     print(sub)
     fig, ax = plt.subplots()
 

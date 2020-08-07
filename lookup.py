@@ -64,7 +64,7 @@ def downsample(q=50):
         os.remove(file_names["downsampled data"])
     rng = np.random.default_rng()
     header = True
-    N_0 = 5000  # percentile(q)
+    N_0 = percentile(q)
     print("Downsampled to {} consensus molecules".format(N_0))
     for i, chunk in enumerate(
         pd.read_csv(
@@ -154,9 +154,7 @@ def seq_data_df(seq_number, group_by=None, trim_and_flip=True):
         if group_by == "ID":
             return pd.read_csv(file_names["seq group IDs t&f"].format(seq_number))
         elif group_by == "position":
-            return pd.read_csv(
-                file_names["seq group positions t&f"].format(seq_number)
-            )
+            return pd.read_csv(file_names["seq group positions t&f"].format(seq_number))
         else:
             return pd.read_csv(file_names["seq t&f"].format(seq_number), index_col=0,)
     else:
