@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-from constants import BASES, base_subs_map, sub_color_map
-from lookup import exon_df, exon_seqs_map, seq_data_df
+from constants import BASES, base_variants_map, variant_color_map
+from lookup import exon_df, exon_tiles_map, tile_data_df
 
 
 def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True):
@@ -21,25 +21,25 @@ def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True)
 
     print(exon_number)
     exon = exon_df.loc[exon_number, :]
-    seq_df = exon_seqs_map[exon_number]
+    tile_df = exon_tiles_map[exon_number]
     df = pd.DataFrame()
     plot_title = "Gene {} ".format(exon_number)
 
     if trim_and_flip:
         plot_title += "flipped "
-        for i in seq_df.index:
-            df = pd.concat([df, seq_data_df(i, group_by="position")]).drop_duplicates(
+        for i in tile_df.index:
+            df = pd.concat([df, tile_data_df(i, group_by="position")]).drop_duplicates(
                 keep="first"
             )
     else:
 
-        for i in seq_df.index:
+        for i in tile_df.index:
             df = pd.concat(
-                [df, seq_data_df(i, group_by="position", trim_and_flip=False)]
+                [df, tile_data_df(i, group_by="position", trim_and_flip=False)]
             ).drop_duplicates(keep="first")
 
     # Make up plot title
-    for strand in seq_df["strand"]:
+    for strand in tile_df["strand"]:
         plot_title += strand
 
     for base in BASES:
@@ -47,22 +47,22 @@ def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True)
 
         axs = axs.flatten()
         for j, ax in enumerate(axs):
-            for i, sub in enumerate(base_subs_map[base]):
+            for i, variant in enumerate(base_variants_map[base]):
                 if (3 == j) or (i == j):
-                    color = sub_color_map[sub]
+                    color = variant_color_map[variant]
                     if 3 == j:
                         ax.set(title=base)
                     else:
-                        ax.set(title=sub)
+                        ax.set(title=variant)
                 else:
                     color = "lightgrey"
 
-                sub_df = df.loc[df["sub"] == sub]
+                variant_df = df.loc[df["variant"] == variant]
                 if downsample:
                     ax.plot(
-                        sub_df["position"],
-                        sub_df["downsample"],
-                        label=sub + "+",
+                        variant_df["position"],
+                        variant_df["downsample"],
+                        label=variant + "+",
                         linestyle="None",
                         marker="^",
                         color=color,
@@ -70,9 +70,10 @@ def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True)
                     )
                 else:
                     ax.plot(
-                        sub_df["position"],
-                        sub_df["num subs"] / sub_df["num consensus molecules"],
-                        label=sub + "+",
+                        variant_df["position"],
+                        variant_df["num variants"]
+                        / variant_df["num consensus molecules"],
+                        label=variant + "+",
                         linestyle="None",
                         marker="^",
                         color=color,
@@ -95,11 +96,11 @@ def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True)
                 alpha=0.25,
             )
             axtwin.set(ylabel="number of consensus molecules")
-            for i, seq in seq_df.iterrows():
+            for i, tile in tile_df.iterrows():
                 axtwin.plot(
-                    [seq["start"], seq["end"]],
+                    [tile["start"], tile["end"]],
                     [0, 0],
-                    label="seq {}".format(i),
+                    label="tile {}".format(i),
                     marker="|",
                 )
         axs[-1].legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")

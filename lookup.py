@@ -13,7 +13,7 @@ from constants import (
     file_names,
     LANES,
     PEOPLE,
-    sub_complement_map,
+    variant_complement_map,
     vec_sorter,
 )
 
@@ -21,8 +21,8 @@ from constants import (
 sample_column_names = [
     "chromosome",
     "position",
-    "sub",
-    "num subs",
+    "variant",
+    "num variants",
     "num consensus molecules",
     "sample ID",
 ]
@@ -77,19 +77,19 @@ def downsample(q=50):
     ):
         print(i)
         chunk["downsample"] = rng.binomial(
-            n=N_0, p=chunk["num subs"] / chunk["num consensus molecules"]
+            n=N_0, p=chunk["num variants"] / chunk["num consensus molecules"]
         )
         chunk.to_csv(file_names["downsampled data"], mode="a", header=header)
         header = False
         gc.collect()
 
 
-def sort_caroline_seqs():
+def sort_caroline_tiles():
     """
     Orders data from Caroline by chromosome.
     """
     df = pd.read_csv(
-        file_names["Caroline seqs"],
+        file_names["Caroline tiles"],
         header=None,
         names=["chromosome", "start", "end", "who tf knows", "length", "strand"],
         sep="\t",
@@ -99,52 +99,52 @@ def sort_caroline_seqs():
         by="chromosome", kind="mergesort", key=vec_sorter, ignore_index=True,
     )  # use mergesort for stability
 
-    df.to_csv(file_names["Caroline seqs sorted"], sep="\t")
+    df.to_csv(file_names["Caroline tiles sorted"], sep="\t")
 
 
-def separating_seqs(seq_numbers):
+def separating_tiles(tile_numbers):
     """
-    Separates the seqs in full_data.txt by the seqs in Caroline's file.
+    Separates the tiles in full_data.txt by the tiles in Caroline's file.
 
-    seq_numbers = list of seqs to produce files for.
+    tile_numbers = list of tiles to produce files for.
 
-    Note: cannot do all seqs at once.
+    Note: cannot do all tiles at once.
     """
-    reduced_seq_df = seq_df.loc[seq_numbers]
-    seq_dfs = []
-    for i in range(len(seq_numbers)):
-        seq_dfs.append(pd.DataFrame(columns=sample_column_names))
+    reduced_tile_df = tile_df.loc[tile_numbers]
+    tile_dfs = []
+    for i in range(len(tile_numbers)):
+        tile_dfs.append(pd.DataFrame(columns=sample_column_names))
 
     for j, chunk in enumerate(
         pd.read_csv(file_names["downsampled data"], chunksize=CHUNKSIZE, index_col=0)
     ):
         print("chunk {}".format(j))
-        for i, (k, seq) in zip(range(seq_numbers.size), reduced_seq_df.iterrows()):
-            # print("seq {}".format(i))
+        for i, (k, tile) in zip(range(tile_numbers.size), reduced_tile_df.iterrows()):
+            # print("tile {}".format(i))
 
-            seq_dfs[i] = seq_dfs[i].append(
+            tile_dfs[i] = tile_dfs[i].append(
                 chunk.loc[
-                    (chunk["position"] >= seq["start"])
-                    & (chunk["position"] <= seq["end"])
+                    (chunk["position"] >= tile["start"])
+                    & (chunk["position"] <= tile["end"])
                 ],
                 ignore_index=True,
             )
         gc.collect()
 
-    for i, df in zip(seq_numbers, seq_dfs):
-        df.to_csv(file_names["seq"].format(i))
+    for i, df in zip(tile_numbers, tile_dfs):
+        df.to_csv(file_names["tile"].format(i))
 
 
 aggregation_functions = {
-    "num subs": "sum",
+    "num variants": "sum",
     "num consensus molecules": "sum",
     "downsample": "sum",
 }
 
 
-def seq_data_df(seq_number, group_by=None, trim_and_flip=True):
+def tile_data_df(tile_number, group_by=None, trim_and_flip=True):
     """
-    Returns DataFrame from seq_(seq_number).csv.
+    Returns DataFrame from tile_(tile_number).csv.
 
     group_by = "position" combines samples at the same position.
     group_by = "ID" combines samples with the same ID (person and age)
@@ -152,66 +152,66 @@ def seq_data_df(seq_number, group_by=None, trim_and_flip=True):
     """
     if trim_and_flip:
         if group_by == "ID":
-            return pd.read_csv(file_names["seq group IDs t&f"].format(seq_number))
+            return pd.read_csv(file_names["tile group IDs t&f"].format(tile_number))
         elif group_by == "position":
-            return pd.read_csv(file_names["seq group positions t&f"].format(seq_number))
+            return pd.read_csv(file_names["tile group positions t&f"].format(tile_number))
         else:
-            return pd.read_csv(file_names["seq t&f"].format(seq_number), index_col=0,)
+            return pd.read_csv(file_names["tile t&f"].format(tile_number), index_col=0,)
     else:
         if group_by == "ID":
-            return pd.read_csv(file_names["seq group IDs"].format(seq_number))
+            return pd.read_csv(file_names["tile group IDs"].format(tile_number))
         elif group_by == "position":
-            return pd.read_csv(file_names["seq group positions"].format(seq_number))
+            return pd.read_csv(file_names["tile group positions"].format(tile_number))
         else:
-            return pd.read_csv(file_names["seq"].format(seq_number), index_col=0)
+            return pd.read_csv(file_names["tile"].format(tile_number), index_col=0)
 
 
-def group_by_position(seq_number, trim_and_flip=True):
+def group_by_position(tile_number, trim_and_flip=True):
     """
-    Groups the specified seq by position.
+    Groups the specified tile by position.
     """
-    df = seq_data_df(seq_number, trim_and_flip=trim_and_flip)
+    df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
     df = df.drop(columns=["sample ID"])
-    df = df.groupby(["position", "chromosome", "sub"]).agg(aggregation_functions)
+    df = df.groupby(["position", "chromosome", "variant"]).agg(aggregation_functions)
     if trim_and_flip:
-        df.to_csv(file_names["seq group positions t&f"].format(seq_number))
+        df.to_csv(file_names["tile group positions t&f"].format(tile_number))
     else:
-        df.to_csv(file_names["seq group positions"].format(seq_number))
+        df.to_csv(file_names["tile group positions"].format(tile_number))
 
 
-def group_by_ID(seq_number, trim_and_flip=True):
+def group_by_ID(tile_number, trim_and_flip=True):
     """
-    Groups the specified seq by ID (person and age).
+    Groups the specified tile by ID (person and age).
     """
-    df = seq_data_df(seq_number, trim_and_flip=trim_and_flip)
+    df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
     df = df.drop(columns=["position"])
-    df = df.groupby(["sample ID", "chromosome", "sub"]).agg(aggregation_functions)
+    df = df.groupby(["sample ID", "chromosome", "variant"]).agg(aggregation_functions)
     if trim_and_flip:
-        df.to_csv(file_names["seq group IDs t&f"].format(seq_number))
+        df.to_csv(file_names["tile group IDs t&f"].format(tile_number))
     else:
-        df.to_csv(file_names["seq group IDs"].format(seq_number))
+        df.to_csv(file_names["tile group IDs"].format(tile_number))
 
 
 def trim_and_flip(exon_number):
     """
     Flips neg data to be what the actual change was.
 
-    The called changes are all relative to the top strand. This function creates files which identify the actual sub seen.
+    The called changes are all relative to the top strand. This function creates files which identify the actual variant seen.
     """
-    seqs = exon_seqs_map[exon_number]
-    next_df = seq_data_df(seqs.index[0], trim_and_flip=False)
-    if len(seqs.index) >= 2:
-        for i in seqs.index[:-1]:
+    tiles = exon_tiles_map[exon_number]
+    next_df = tile_data_df(tiles.index[0], trim_and_flip=False)
+    if len(tiles.index) >= 2:
+        for i in tiles.index[:-1]:
             df = next_df
-            next_df = seq_data_df(i + 1, trim_and_flip=False)
+            next_df = tile_data_df(i + 1, trim_and_flip=False)
             cond = ~df["position"].isin(next_df["position"])
             next_cond = ~next_df["position"].isin(df["position"])
             df = df.loc[cond, :]
             next_df = next_df.loc[next_cond, :]
-            if seq_df.at[i, "strand"] == "-":
-                df = df.replace({"sub": sub_complement_map})
-            df.to_csv(file_names["seq t&f"].format(i))
-    next_df.to_csv(file_names["seq t&f"].format(seqs.index[-1]))
+            if tile_df.at[i, "strand"] == "-":
+                df = df.replace({"variant": variant_complement_map})
+            df.to_csv(file_names["tile t&f"].format(i))
+    next_df.to_csv(file_names["tile t&f"].format(tiles.index[-1]))
 
 
 ### Wrappers ###
@@ -219,7 +219,7 @@ def trim_and_flip(exon_number):
 
 def group_by_position_wrapper(trim_and_flip=True):
     """
-    Repeats group by position for all seqs.
+    Repeats group by position for all tiles.
     """
     for i in np.arange(0, 1063):
         group_by_position(i, trim_and_flip)
@@ -228,39 +228,39 @@ def group_by_position_wrapper(trim_and_flip=True):
 
 def group_by_ID_wrapper(trim_and_flip=True):
     """
-    Repeats group by ID for all seqs.
+    Repeats group by ID for all tiles.
     """
     for i in np.arange(0, 1063):
         group_by_ID(i, trim_and_flip)
         print(i)
 
 
-def separating_seqs_wrapper():
+def separating_tiles_wrapper():
     """
-    Separates seqs in chunks of 100 to avoid memory issues.
+    Separates tiles in chunks of 100 to avoid memory issues.
     """
-    print("Separating seqs 0 to 99")
-    separating_seqs(np.arange(0, 100))
-    print("Separating seqs 100 to 199")
-    separating_seqs(np.arange(100, 200))
-    print("Separating seqs 200 to 299")
-    separating_seqs(np.arange(200, 300))
-    print("Separating seqs 300 to 399")
-    separating_seqs(np.arange(300, 400))
-    print("Separating seqs 400 to 499")
-    separating_seqs(np.arange(400, 500))
-    print("Separating seqs 500 to 599")
-    separating_seqs(np.arange(500, 600))
-    print("Separating seqs 600 to 699")
-    separating_seqs(np.arange(600, 700))
-    print("Separating seqs 700 to 799")
-    separating_seqs(np.arange(700, 800))
-    print("Separating seqs 800 to 899")
-    separating_seqs(np.arange(800, 900))
-    print("Separating seqs 900 to 999")
-    separating_seqs(np.arange(900, 1000))
-    print("Separating seqs 1000 to 1062")
-    separating_seqs(np.arange(1000, 1063))
+    print("Separating tiles 0 to 99")
+    separating_tiles(np.arange(0, 100))
+    print("Separating tiles 100 to 199")
+    separating_tiles(np.arange(100, 200))
+    print("Separating tiles 200 to 299")
+    separating_tiles(np.arange(200, 300))
+    print("Separating tiles 300 to 399")
+    separating_tiles(np.arange(300, 400))
+    print("Separating tiles 400 to 499")
+    separating_tiles(np.arange(400, 500))
+    print("Separating tiles 500 to 599")
+    separating_tiles(np.arange(500, 600))
+    print("Separating tiles 600 to 699")
+    separating_tiles(np.arange(600, 700))
+    print("Separating tiles 700 to 799")
+    separating_tiles(np.arange(700, 800))
+    print("Separating tiles 800 to 899")
+    separating_tiles(np.arange(800, 900))
+    print("Separating tiles 900 to 999")
+    separating_tiles(np.arange(900, 1000))
+    print("Separating tiles 1000 to 1062")
+    separating_tiles(np.arange(1000, 1063))
 
 
 def group_strands_wrapper():
@@ -284,7 +284,7 @@ def refresh_data(redownsample=False):
     """
     if redownsample:
         downsample()
-        separating_seqs_wrapper()
+        separating_tiles_wrapper()
     group_by_ID_wrapper(trim_and_flip=False)
     group_by_position_wrapper(trim_and_flip=False)
     trim_and_flip_wrapper()
@@ -303,39 +303,39 @@ exon_df = pd.read_csv(
     sep="\t",
 )
 
-# DataFrame of seq information
-seq_df = pd.read_csv(file_names["Caroline seqs sorted"], sep="\t", index_col=0)
+# DataFrame of tile information
+tile_df = pd.read_csv(file_names["Caroline tiles sorted"], sep="\t", index_col=0)
 
-exon_seqs_map = {}
+exon_tiles_map = {}
 for i, exon in exon_df.iterrows():
-    exon_seqs_map[i] = seq_df.loc[
-        (seq_df["start"] >= exon["start"]) & (seq_df["end"] <= exon["end"])
+    exon_tiles_map[i] = tile_df.loc[
+        (tile_df["start"] >= exon["start"]) & (tile_df["end"] <= exon["end"])
     ]
 
 
 ### Miscellaneous ###
 
 
-def empty_seqs():
+def empty_tiles():
     """
-    Identifies any empty seqs.
+    Identifies any empty tiles.
     """
     for i, exon in exon_df.iterrows():
-        for j, seq in exon_seqs_map[i].iterrows():
-            if 0 == len(seq_data_df(j).index):
-                print("Empty seq found, exon {} seq {}".format(i, j))
+        for j, tile in exon_tiles_map[i].iterrows():
+            if 0 == len(tile_data_df(j).index):
+                print("Empty tile found, exon {} tile {}".format(i, j))
 
 
-def seqs_not_in_exons():
+def tiles_not_in_exons():
     """
-    Identifies any seqs that don't appear in any exons
+    Identifies any tiles that don't appear in any exons
     """
-    seqs_in_exons = []
+    tiles_in_exons = []
     for i in exon_df.index:
-        seqs_in_exons.extend(exon_seqs_map[i].index)
+        tiles_in_exons.extend(exon_tiles_map[i].index)
 
-    for i in seq_df.index:
-        if ~np.isin(i, seqs_in_exons):
+    for i in tile_df.index:
+        if ~np.isin(i, tiles_in_exons):
             print("Sequence {} is not in any exon".format(i))
 
-    print(seqs_in_exons)
+    print(tiles_in_exons)

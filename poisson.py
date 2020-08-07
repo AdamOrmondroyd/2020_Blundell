@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from constants import SUBS
-from lookup import seq_df
+from lookup import tile_df
 
 plot_title = "histogram"
 
-seq = 1
-positions = np.arange(seq_df.at[seq, "start"], seq_df.at[seq, "end"])
-chromosome = seq_df.at[seq, "chromosome"]
+tile = 1
+positions = np.arange(tile_df.at[tile, "start"], tile_df.at[tile, "end"])
+chromosome = tile_df.at[tile, "chromosome"]
 
 df = lookup(chromosome, positions, downsample=True)
 

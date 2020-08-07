@@ -15,7 +15,7 @@ lane_age_map = {"lane1": 0, "lane2": 7, "lane3": 17, "lane4": 24}
 SUBS = np.array(
     ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
 )
-base_subs_map = {
+base_variants_map = {
     "A": SUBS[:3],
     "C": SUBS[3:6],
     "G": SUBS[6:9],
@@ -27,7 +27,7 @@ base_color_map = {
     "G": "magenta",
     "T": "black",
 }
-sub_color_map = {
+variant_color_map = {
     "AC": "lime",
     "AG": "blueviolet",
     "AT": "dodgerblue",
@@ -51,7 +51,7 @@ def id_age_map(sample_id):
     return lane_age_map[sample_id[:5]]
 
 
-sub_complement_map = {
+variant_complement_map = {
     "AC": "TG",
     "AG": "TC",
     "AT": "TA",
@@ -73,16 +73,16 @@ file_names = {
     "data": data_location + main_data_file,
     "downsampled data": data_location + "\\downsampled_data.txt",
     "Wing exons": data_location + "\\Wing_exons.bed",
-    "Caroline seqs": data_location + "\\Caroline_seqs.bed",
-    "Caroline seqs sorted": data_location + "\\Caroline_seqs_sorted.txt",
-    "seq": data_location + "\\seqs\\seq_{}.csv",
-    "seq group IDs": data_location + "\\seqs_by_ID\\seq_{}_group_ID.csv",
-    "seq group positions": data_location
-    + "\\seqs_by_position\\seq_{}_group_positions.csv",
-    "seq t&f": data_location + "\\seqs_t&f\\seq_{}_t&f.csv",
-    "seq group IDs t&f": data_location + "\\seqs_by_ID_t&f\\seq_{}_group_ID_t&f.csv",
-    "seq group positions t&f": data_location
-    + "\\seqs_by_position_t&f\\seq_{}_group_positions_t&f.csv",
+    "Caroline tiles": data_location + "\\Caroline_tiles.bed",
+    "Caroline tiles sorted": data_location + "\\Caroline_tiles_sorted.txt",
+    "tile": data_location + "\\tiles\\tile_{}.csv",
+    "tile group IDs": data_location + "\\tiles_by_ID\\tile_{}_group_ID.csv",
+    "tile group positions": data_location
+    + "\\tiles_by_position\\tile_{}_group_positions.csv",
+    "tile t&f": data_location + "\\tiles_t&f\\tile_{}_t&f.csv",
+    "tile group IDs t&f": data_location + "\\tiles_by_ID_t&f\\tile_{}_group_ID_t&f.csv",
+    "tile group positions t&f": data_location
+    + "\\tiles_by_position_t&f\\tile_{}_group_positions_t&f.csv",
 }
 
 
