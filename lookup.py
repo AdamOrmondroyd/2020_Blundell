@@ -291,7 +291,6 @@ def refresh_data(redownsample=False):
     """
     if redownsample:
         downsample()
-        exit()
         separating_tiles_wrapper()
     print("Grouping by ID")
     group_by_ID_wrapper(trim_and_flip=False)

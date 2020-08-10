@@ -11,7 +11,9 @@ from constants import BASES, base_variants_map, variant_color_map
 from lookup import exon_df, exon_tiles_map, tile_data_df
 
 
-def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True):
+def exon_error_plot(
+    exon_number, downsample=True, trim_and_flip=True, save=True, show_tiles=False
+):
     """
     Saves plots of errors for a given exon, separating + and - strand data.
 
@@ -50,9 +52,7 @@ def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True)
             for i, variant in enumerate(base_variants_map[base]):
                 if (3 == j) or (i == j):
                     color = variant_color_map[variant]
-                    if 3 == j:
-                        ax.set(title=base)
-                    else:
+                    if i == j:
                         ax.set(title=variant)
                 else:
                     color = "lightgrey"
@@ -62,7 +62,7 @@ def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True)
                     ax.plot(
                         variant_df["position"],
                         variant_df["downsample"],
-                        label=variant + "+",
+                        label=variant,
                         linestyle="None",
                         marker="^",
                         color=color,
@@ -73,7 +73,7 @@ def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True)
                         variant_df["position"],
                         variant_df["num variants"]
                         / variant_df["num consensus molecules"],
-                        label=variant + "+",
+                        label=variant,
                         linestyle="None",
                         marker="^",
                         color=color,
@@ -96,30 +96,41 @@ def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True)
                 alpha=0.25,
             )
             axtwin.set(ylabel="number of consensus molecules")
-            for i, tile in tile_df.iterrows():
-                axtwin.plot(
-                    [tile["start"], tile["end"]],
-                    [0, 0],
-                    label="tile {}".format(i),
-                    marker="|",
-                )
-        axs[-1].legend(bbox_to_anchor=(1.05, 1.0), loc="upper left", frameon=False)
 
-        fig.suptitle("{} {}".format(plot_title, base), size=16, y=0.52)
+            if show_tiles:
+                for i, tile in tile_df.iterrows():
+                    axtwin.plot(
+                        [tile["start"], tile["end"]],
+                        [0, 0],
+                        label="tile {}".format(i),
+                        marker="|",
+                    )
+        axs[-1].legend(
+            bbox_to_anchor=(0.3, 1.1), loc="upper left", frameon=False, ncol=3
+        )
+
+        fig.suptitle(plot_title, size=16, y=0.5)
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
         if save:
             if downsample:
                 fig.savefig(
                     "plots\\downsampled_errors\\{}_{}_downsampled.png".format(
-                        plot_title, base
+                        plot_title.replace(" ", "_"), base
+                    ).replace(" ", "_")
+                )
+                fig.savefig(
+                    "plots\\downsampled_errors\\{}_{}_downsampled.eps".format(
+                        plot_title.replace(" ", "_"), base
                     )
                 )
             else:
                 fig.savefig(
-                    "plots\\error_rates\\{}_{}_error_rate.png".format(plot_title, base)
+                    "plots\\error_rates\\{}_{}_error_rate.png".format(
+                        plot_title.replace(" ", "_"), base
+                    )
                 )
-    if ~save:
+    if not save:
         plt.show()
 
     plt.close("all")
