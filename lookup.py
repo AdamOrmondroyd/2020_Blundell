@@ -5,6 +5,7 @@ Contains functions for accessing the ALSPAC data using Pandas dataframes.
 """
 import numpy as np
 import pandas as pd
+from Bio.Seq import Seq
 import os
 import gc
 from constants import (
@@ -13,7 +14,6 @@ from constants import (
     file_names,
     LANES,
     PEOPLE,
-    variant_complement_map,
     vec_sorter,
 )
 
@@ -154,7 +154,9 @@ def tile_data_df(tile_number, group_by=None, trim_and_flip=True):
         if group_by == "ID":
             return pd.read_csv(file_names["tile group IDs t&f"].format(tile_number))
         elif group_by == "position":
-            return pd.read_csv(file_names["tile group positions t&f"].format(tile_number))
+            return pd.read_csv(
+                file_names["tile group positions t&f"].format(tile_number)
+            )
         else:
             return pd.read_csv(file_names["tile t&f"].format(tile_number), index_col=0,)
     else:
@@ -198,6 +200,11 @@ def trim_and_flip(exon_number):
 
     The called changes are all relative to the top strand. This function creates files which identify the actual variant seen.
     """
+
+    def flip(sequence_string):
+        """Returns complement of the variant as a Biopython Seq"""
+        return Seq(sequence_string).complement
+
     tiles = exon_tiles_map[exon_number]
     next_df = tile_data_df(tiles.index[0], trim_and_flip=False)
     if len(tiles.index) >= 2:
@@ -209,7 +216,7 @@ def trim_and_flip(exon_number):
             df = df.loc[cond, :]
             next_df = next_df.loc[next_cond, :]
             if tile_df.at[i, "strand"] == "-":
-                df = df.replace({"variant": variant_complement_map})
+                df = df.replace({"variant": flip})
             df.to_csv(file_names["tile t&f"].format(i))
     next_df.to_csv(file_names["tile t&f"].format(tiles.index[-1]))
 
@@ -284,11 +291,17 @@ def refresh_data(redownsample=False):
     """
     if redownsample:
         downsample()
+        exit()
         separating_tiles_wrapper()
+    print("Grouping by ID")
     group_by_ID_wrapper(trim_and_flip=False)
+    print("Grouping by position")
     group_by_position_wrapper(trim_and_flip=False)
+    print("Trimming and flipping")
     trim_and_flip_wrapper()
+    print("Grouping by ID (t&f)")
     group_by_ID_wrapper()
+    print("Grouping by position (t&f)")
     group_by_position_wrapper()
 
 
@@ -339,3 +352,11 @@ def tiles_not_in_exons():
             print("Sequence {} is not in any exon".format(i))
 
     print(tiles_in_exons)
+
+
+# def read_genome():
+#     """
+#     Uses the first letter of the first variant at each position to work out what the "correct" genome is.
+#     """
+#     genome = {{}}
+#     for j in se

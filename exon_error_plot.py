@@ -103,7 +103,7 @@ def exon_error_plot(exon_number, downsample=True, trim_and_flip=True, save=True)
                     label="tile {}".format(i),
                     marker="|",
                 )
-        axs[-1].legend(bbox_to_anchor=(1.05, 1.0), loc="upper left")
+        axs[-1].legend(bbox_to_anchor=(1.05, 1.0), loc="upper left", frameon=False)
 
         fig.suptitle("{} {}".format(plot_title, base), size=16, y=0.52)
         fig.subplots_adjust(top=0.8)

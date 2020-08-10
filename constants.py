@@ -51,21 +51,6 @@ def id_age_map(sample_id):
     return lane_age_map[sample_id[:5]]
 
 
-variant_complement_map = {
-    "AC": "TG",
-    "AG": "TC",
-    "AT": "TA",
-    "CA": "GT",
-    "CG": "GC",
-    "CT": "GA",
-    "GA": "CT",
-    "GC": "CG",
-    "GT": "CA",
-    "TA": "AT",
-    "TC": "AG",
-    "TG": "AC",
-}
-
 data_location = "C:\\Users\\Adam\\Programming_files\\2020_Blundell_data_files"
 main_data_file = "\\full_data.txt"
 # main_data_file = "\\alspac.all.cleaned.sorted.out"
