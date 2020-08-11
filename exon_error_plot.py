@@ -25,7 +25,7 @@ def exon_error_plot(
     exon = exon_df.loc[exon_number, :]
     tile_df = exon_tiles_map[exon_number]
     df = pd.DataFrame()
-    plot_title = "Gene {} ".format(exon_number)
+    plot_title = "Gene {}".format(exon_number)
 
     if trim_and_flip:
         plot_title += "flipped "
@@ -40,9 +40,9 @@ def exon_error_plot(
                 [df, tile_data_df(i, group_by="position", trim_and_flip=False)]
             ).drop_duplicates(keep="first")
 
-    # Make up plot title
+    strands = ""
     for strand in tile_df["strand"]:
-        plot_title += strand
+        strands += strand
 
     for base in BASES:
         fig, axs = plt.subplots(2, 2, figsize=(15, 8))
@@ -109,27 +109,20 @@ def exon_error_plot(
             bbox_to_anchor=(0.3, 1.1), loc="upper left", frameon=False, ncol=3
         )
 
-        fig.suptitle(plot_title, size=16, y=0.5)
+        fig.suptitle("{} {} {}".format(plot_title, strands, base), size=16, y=0.5)
         fig.subplots_adjust(top=0.8)
         fig.tight_layout()
         if save:
             if downsample:
-                fig.savefig(
-                    "plots\\downsampled_errors\\{}_{}_downsampled.png".format(
-                        plot_title.replace(" ", "_"), base
-                    ).replace(" ", "_")
-                )
-                fig.savefig(
-                    "plots\\downsampled_errors\\{}_{}_downsampled.eps".format(
-                        plot_title.replace(" ", "_"), base
-                    )
+                file_name = "plots\\downsampled_errors\\{}_{}_downsampled".format(
+                    plot_title.replace(" ", "_"), base
                 )
             else:
-                fig.savefig(
-                    "plots\\error_rates\\{}_{}_error_rate.png".format(
-                        plot_title.replace(" ", "_"), base
-                    )
+                file_name = "plots\\error_rates\\{}_{}_error_rate".format(
+                    plot_title.replace(" ", "_"), base
                 )
+            fig.savefig(file_name + ".png")
+            fig.savefig(file_name + ".svg", dpi=1200)
     if not save:
         plt.show()
 

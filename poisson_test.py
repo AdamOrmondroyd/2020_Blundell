@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from lookup import exon_tiles_map, tile_df, tile_data_df
 from constants import SUBS
+from scipy.stats import betabinom, poisson
+from scipy.optimize import curve_fit
 
 
 def mean_var(tile_number, variant, chromosome):
@@ -130,11 +132,12 @@ def plot_exon_mean_var(exon_number, save=True):
         plt.close("all")
 
 
-def plot_tile_variant_hist(tile_number):
+def plot_tile_variant_hist(tile_number, fit=None):
     """
-    Plots a histogram of the number of downsampled variantstitutions for a given tile
+    Plots a histogram of the number of downsampled variants for a given tile
+
+    fit = None/"Poisson"/"Beta-binomial"
     """
-    plot_title = "histogram"
 
     df = tile_data_df(tile_number)
 
@@ -143,9 +146,43 @@ def plot_tile_variant_hist(tile_number):
         fig, ax = plt.subplots()
 
         change_df = df.loc[variant == df["variant"]]
+        mean = np.mean(change_df["downsample"])
+        variance = np.var(change_df["downsample"])
+        D = variance / mean  # index of dispersion
+        print("mean: {}, variance: {}, variance/mean: {}".format(mean, variance, D))
+        n = 6348  # 50th percentile of smaller data file
+        N = len(change_df.index)  # To adjust normalisation of distributions
 
-        bins = np.arange(-0.5, np.max(change_df["num variants"]) + 0.5)
-        print(bins)
-        ax.hist(change_df["num variants"], bins=bins)
-        ax.set(title="{}_{}".format(plot_title, variant), yscale="log")
+        maximum = np.amax(change_df["downsample"])
+        print(maximum)
+
+        bins = np.arange(-0.5, maximum + 1.5)
+        xs = np.arange(maximum)
+
+        hs, hs_bin_edges = np.histogram(change_df["downsample"], bins)
+        print(hs)
+
+        ax.hist(
+            change_df["downsample"], bins=bins, color="c", linestyle="-", edgecolor="k",
+        )
+
+        if fit == "Poisson":
+            ys = poisson.pmf(xs, mean) * N
+            ax.plot(xs, ys, color="k")
+
+        if fit == "Beta-binomial":
+
+            def f(x, a, b):
+                # b = a * (n / mean - 1.0)
+                return N * betabinom.pmf(x, n, a, b)
+
+            (a, b), pcov = curve_fit(f, xs, hs)
+            fit_mean = betabinom.mean(n, a, b)
+            print("fit mean: {}".format(fit_mean))
+            fit_var = betabinom.var(n, a, b)
+            print("fit variance: {}".format(fit_var))
+
+            ax.plot(xs, f(xs, a, b), color="k")
+
+        ax.set(title="{} D = {:.2f}".format(variant, D))  # , yscale="log")
         plt.show()

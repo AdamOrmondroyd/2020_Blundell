@@ -76,6 +76,7 @@ def downsample(q=50):
         )
     ):
         print(i)
+        chunk = chunk.loc[chunk["num consensus molecules"] >= N_0]
         chunk["downsample"] = rng.binomial(
             n=N_0, p=chunk["num variants"] / chunk["num consensus molecules"]
         )
