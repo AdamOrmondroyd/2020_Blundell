@@ -9,7 +9,6 @@ from Bio.Seq import Seq
 import os
 import gc
 from constants import (
-    SUBS,
     CHUNKSIZE,
     file_names,
     LANES,
@@ -204,7 +203,9 @@ def trim_and_flip(exon_number):
 
     def flip(sequence_string):
         """Returns complement of the variant as a Biopython Seq"""
-        return Seq(sequence_string).complement
+        return str(Seq(sequence_string).complement())
+
+    flip = np.vectorize(flip)
 
     tiles = exon_tiles_map[exon_number]
     next_df = tile_data_df(tiles.index[0], trim_and_flip=False)
@@ -216,8 +217,8 @@ def trim_and_flip(exon_number):
             next_cond = ~next_df["position"].isin(df["position"])
             df = df.loc[cond, :]
             next_df = next_df.loc[next_cond, :]
-            if tile_df.at[i, "strand"] == "-":
-                df = df.replace({"variant": flip})
+            if tile_df.at[i, "strand"] == "-" and len(df.index) != 0:
+                df["variant"] = flip(df["variant"])
             df.to_csv(file_names["tile t&f"].format(i))
     next_df.to_csv(file_names["tile t&f"].format(tiles.index[-1]))
 
@@ -324,6 +325,11 @@ for i, exon in exon_df.iterrows():
     exon_tiles_map[i] = tile_df.loc[
         (tile_df["start"] >= exon["start"]) & (tile_df["end"] <= exon["end"])
     ]
+
+chromosome_tiles_map = {}
+chromosomes = tile_df["chromosome"].unique()
+for chromosome in chromosomes:
+    chromosome_tiles_map[chromosome] = tile_df.loc[tile_df["chromosome"] == chromosome]
 
 
 ### Miscellaneous ###

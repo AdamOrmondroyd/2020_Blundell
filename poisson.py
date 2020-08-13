@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from constants import SUBS
+from constants import VARIANTS
 from lookup import tile_df
 
 plot_title = "histogram"
@@ -11,7 +11,7 @@ chromosome = tile_df.at[tile, "chromosome"]
 
 df = lookup(chromosome, positions, downsample=True)
 
-for sub in SUBS:
+for sub in VARIANTS:
     print(sub)
     fig, ax = plt.subplots()
 

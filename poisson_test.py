@@ -1,17 +1,17 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from lookup import exon_tiles_map, tile_df, tile_data_df
-from constants import SUBS
+from lookup import chromosome_tiles_map, exon_tiles_map, tile_df, tile_data_df
+from constants import VARIANTS
 from scipy.stats import betabinom, poisson
 from scipy.optimize import curve_fit
 
 
-def mean_var(tile_number, variant, chromosome):
+def mean_var(tile_number, variant, trim_and_flip):
     """
     Returns  of mean and var for a given tile and variant.
     """
-    df = tile_data_df(tile_number, trim_and_flip=False)
+    df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
     df = df.loc[df["variant"] == variant]
 
     mean = np.mean(df["downsample"])
@@ -19,8 +19,11 @@ def mean_var(tile_number, variant, chromosome):
     return mean, variance
 
 
-def plot_all_mean_var(save=True):
-    for variant in SUBS:
+def plot_all_mean_var(show_strands=True, save=True, trim_and_flip=True):
+    """
+    Plots the mean, variance and the index of dispersion for all tiles.
+    """
+    for variant in VARIANTS:
         print(variant)
         fig, ax = plt.subplots(3, figsize=(8, 8))
 
@@ -32,13 +35,18 @@ def plot_all_mean_var(save=True):
             variances = np.zeros(len(chr_tile_df.index))
             for i, index in enumerate(chr_tile_df.index):
                 print(i)
-                means[i], variances[i] = mean_var(index, variant, chromosome)
+                means[i], variances[i] = mean_var(index, variant, trim_and_flip)
+
+            if show_strands:
+                marker = "$+$"
+            else:
+                marker = "${}$".format(chromosome)
 
             ax[0].plot(
                 chr_tile_df.index,
                 means,
                 label="means",
-                marker="${}$".format("+"),
+                marker=marker,
                 linestyle="None",
             )
 
@@ -46,15 +54,15 @@ def plot_all_mean_var(save=True):
                 chr_tile_df.index,
                 variances,
                 label="variances",
-                marker="${}$".format("+"),
+                marker=marker,
                 linestyle="None",
             )
 
             ax[2].plot(
                 chr_tile_df.index,
                 variances / means,
-                label="means",
-                marker="${}$".format("+"),
+                label="index of dispersion",
+                marker=marker,
                 linestyle="None",
             )
         for chromosome in pd.unique(tile_df["chromosome"]):
@@ -65,13 +73,18 @@ def plot_all_mean_var(save=True):
             variances = np.zeros(len(chr_tile_df.index))
             for i, index in enumerate(chr_tile_df.index):
                 print(i)
-                means[i], variances[i] = mean_var(index, variant, chromosome)
+                means[i], variances[i] = mean_var(index, variant, trim_and_flip)
+
+            if show_strands:
+                marker = "$-$"
+            else:
+                marker = "${}$".format(chromosome)
 
             ax[0].plot(
                 chr_tile_df.index,
                 means,
                 label="means",
-                marker="${}$".format("-"),
+                marker=marker,
                 linestyle="None",
             )
 
@@ -79,7 +92,7 @@ def plot_all_mean_var(save=True):
                 chr_tile_df.index,
                 variances,
                 label="variances",
-                marker="${}$".format("-"),
+                marker=marker,
                 linestyle="None",
             )
 
@@ -87,33 +100,44 @@ def plot_all_mean_var(save=True):
                 chr_tile_df.index,
                 variances / means,
                 label="means",
-                marker="${}$".format("-"),
+                marker=marker,
                 linestyle="None",
             )
         ax[0].set(
             title="{} means".format(variant), xlabel="tile", ylabel="mean", yscale="log"
         )
         ax[1].set(title="variances", xlabel="tile", ylabel="variance", yscale="log")
-        ax[2].set(title="ratios", xlabel="tile", ylabel="ratios", yscale="log")
+        ax[2].set(
+            title="Index of dispersion",
+            xlabel="tile",
+            ylabel="D = Var/mean",
+            yscale="log",
+        )
         fig.tight_layout()
         if save:
-            fig.savefig("plots\\means_and_variances\\{}_mean_var.png".format(variant))
+            file_name = "plots\\means_and_variances\\{}_mean_var".format(variant)
+            if show_strands:
+                file_name += "_strands"
+            if trim_and_flip:
+                file_name += "_t&f"
+            fig.savefig(file_name + ".png")
+            fig.savefig(file_name + ".svg", dpi=1200)
         else:
             plt.show()
         plt.close("all")
 
 
-def plot_exon_mean_var(exon_number, save=True):
+def plot_exon_mean_var(exon_number, save=True, trim_and_flip=True):
     df = exon_tiles_map[exon_number]
     means = np.zeros(len(df.index))
     variances = np.zeros(len(df.index))
 
-    for variant in SUBS:
+    for variant in VARIANTS:
         print(variant)
         fig, ax = plt.subplots(3, figsize=(8, 8))
         for i in df.index:
             print(i)
-            means[i], variances[i] = mean_var(i, variant)
+            means[i], variances[i] = mean_var(i, variant, trim_and_flip)
         ax[0].plot(df.index, means, label="means", marker="+", linestyle="None")
         ax[0].set(title="means", xlabel="tile", ylabel="mean", yscale="log")
 
@@ -132,16 +156,18 @@ def plot_exon_mean_var(exon_number, save=True):
         plt.close("all")
 
 
-def plot_tile_variant_hist(tile_number, fit=None):
+def plot_chromosome_variant_hist(chromosome, fit=None, save=True):
     """
     Plots a histogram of the number of downsampled variants for a given tile
 
     fit = None/"Poisson"/"Beta-binomial"
     """
+    tile_numbers = chromosome_tiles_map[str(chromosome)].index
+    df = pd.DataFrame()
+    for tile_number in tile_numbers:
+        df = df.append(tile_data_df(tile_number))
 
-    df = tile_data_df(tile_number)
-
-    for variant in SUBS:
+    for variant in VARIANTS:
         print(variant)
         fig, ax = plt.subplots()
 
@@ -157,7 +183,7 @@ def plot_tile_variant_hist(tile_number, fit=None):
         print(maximum)
 
         bins = np.arange(-0.5, maximum + 1.5)
-        xs = np.arange(maximum)
+        xs = np.arange(maximum + 1)
 
         hs, hs_bin_edges = np.histogram(change_df["downsample"], bins)
         print(hs)
@@ -182,7 +208,19 @@ def plot_tile_variant_hist(tile_number, fit=None):
             fit_var = betabinom.var(n, a, b)
             print("fit variance: {}".format(fit_var))
 
-            ax.plot(xs, f(xs, a, b), color="k")
+            ax.plot(xs, f(xs, a, b), color="k", marker="+")
 
-        ax.set(title="{} D = {:.2f}".format(variant, D))  # , yscale="log")
-        plt.show()
+        ax.set(
+            title=variant, xlabel="number of variants", ylabel="frequency", yscale="log"
+        )
+        ax.text(0.75, 0.75, "D = {:.2f}".format(D), transform=ax.transAxes)
+        if save:
+            file_name = "plots\\variant_histograms\\variant_hist_chr{}_{}".format(
+                chromosome, variant
+            )
+            if fit is not None:
+                file_name += "_" + fit
+            fig.savefig(file_name + ".png")
+            fig.savefig(file_name + ".svg", dpi=1200)
+        else:
+            plt.show()

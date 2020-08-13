@@ -12,14 +12,14 @@ BASES = np.array(["A", "C", "G", "T"])
 LANES = np.array(["lane1", "lane2", "lane3", "lane4"])
 age_lane_map = {0: "lane1", 7: "lane2", 17: "lane3", 24: "lane4"}
 lane_age_map = {"lane1": 0, "lane2": 7, "lane3": 17, "lane4": 24}
-SUBS = np.array(
+VARIANTS = np.array(
     ["AC", "AG", "AT", "CA", "CG", "CT", "GA", "GC", "GT", "TA", "TC", "TG"]
 )
 base_variants_map = {
-    "A": SUBS[:3],
-    "C": SUBS[3:6],
-    "G": SUBS[6:9],
-    "T": SUBS[9:12],
+    "A": VARIANTS[:3],
+    "C": VARIANTS[3:6],
+    "G": VARIANTS[6:9],
+    "T": VARIANTS[9:12],
 }
 base_color_map = {
     "A": "red",

@@ -25,10 +25,9 @@ def exon_error_plot(
     exon = exon_df.loc[exon_number, :]
     tile_df = exon_tiles_map[exon_number]
     df = pd.DataFrame()
-    plot_title = "Gene {}".format(exon_number)
+    plot_title = "Exon {}".format(exon_number)
 
     if trim_and_flip:
-        plot_title += "flipped "
         for i in tile_df.index:
             df = pd.concat([df, tile_data_df(i, group_by="position")]).drop_duplicates(
                 keep="first"
@@ -121,6 +120,8 @@ def exon_error_plot(
                 file_name = "plots\\error_rates\\{}_{}_error_rate".format(
                     plot_title.replace(" ", "_"), base
                 )
+            if trim_and_flip:
+                file_name += "_t&f"
             fig.savefig(file_name + ".png")
             fig.savefig(file_name + ".svg", dpi=1200)
     if not save:
