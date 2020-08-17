@@ -351,3 +351,4 @@ def plot_chromosome_variant_hist(
             fig.savefig(file_name + ".svg", dpi=1200)
         else:
             plt.show()
+

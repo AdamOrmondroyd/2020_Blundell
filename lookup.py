@@ -318,7 +318,7 @@ exon_df = pd.read_csv(
 )
 
 # DataFrame of tile information
-tile_df = pd.read_csv(file_names["Caroline tiles sorted"], sep="\t", index_col=0)
+tile_df = pd.read_csv(file_names["Caroline tiles sorted"], index_col=0)
 
 exon_tiles_map = {}
 for i, exon in exon_df.iterrows():
@@ -330,6 +330,8 @@ chromosome_tiles_map = {}
 chromosomes = tile_df["chromosome"].unique()
 for chromosome in chromosomes:
     chromosome_tiles_map[chromosome] = tile_df.loc[tile_df["chromosome"] == chromosome]
+
+juicy_df = pd.read_csv(file_names["juicy tiles"], index_col=0)
 
 
 ### Miscellaneous ###
@@ -366,7 +368,6 @@ def read_genome():
 
     Uses the trimmed and flipped data, so the genome is on the negative strand for those.
     """
-    tile_df = pd.read_csv(file_names["Caroline tiles sorted"], sep="\t", index_col=0)
     tile_genomes = np.empty(len(tile_df.index), dtype=object)
     for j in tile_df.index:
         tile_genomes[j] = ""
@@ -379,10 +380,22 @@ def read_genome():
     tile_df.to_csv(file_names["Caroline tiles sorted"])
 
 
-# def variants_per_position():
-#     for i in tile_df.index:
-#         df = tile_data_df(i, group_by="position")
-#         if True:
-#             num_variants = tile_data_df
-
-read_genome()
+def variants_per_position(threshold=1000):
+    """Spits out locations with juicy number of variants above threshold."""
+    juicy_df = pd.DataFrame(
+        columns=["tile", "chromosome", "position", "variant", "downsample"]
+    )
+    index = 0
+    for j, tile in tile_df.iterrows():
+        df = tile_data_df(j, group_by="position")
+        for i, df_row in df.iterrows():
+            if df_row["downsample"] >= threshold:
+                juicy_df.loc[index] = [
+                    j,
+                    tile["chromosome"],
+                    df_row["position"],
+                    df_row["variant"],
+                    df_row["downsample"],
+                ]
+                index += 1
+    juicy_df.to_csv(file_names["juicy tiles"])
