@@ -360,9 +360,29 @@ def tiles_not_in_exons():
     print(tiles_in_exons)
 
 
-# def read_genome():
-#     """
-#     Uses the first letter of the first variant at each position to work out what the "correct" genome is.
-#     """
-#     genome = {{}}
-#     for j in se
+def read_genome():
+    """
+    Uses the first letter of the first variant at each position to work out what the "correct" genome is.
+
+    Uses the trimmed and flipped data, so the genome is on the negative strand for those.
+    """
+    tile_df = pd.read_csv(file_names["Caroline tiles sorted"], sep="\t", index_col=0)
+    tile_genomes = np.empty(len(tile_df.index), dtype=object)
+    for j in tile_df.index:
+        tile_genomes[j] = ""
+        df = tile_data_df(j, group_by="position")
+        for i, df_row in df.iterrows():
+            if i % 3 == 0:
+                tile_genomes[j] += df_row["variant"][0]
+        print(tile_genomes[j])
+    tile_df["genome"] = tile_genomes
+    tile_df.to_csv(file_names["Caroline tiles sorted"])
+
+
+# def variants_per_position():
+#     for i in tile_df.index:
+#         df = tile_data_df(i, group_by="position")
+#         if True:
+#             num_variants = tile_data_df
+
+read_genome()
