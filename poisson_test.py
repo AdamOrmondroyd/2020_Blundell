@@ -268,7 +268,9 @@ def plot_exon_mean_var(exon_number, save=True, trim_and_flip=True):
         plt.close("all")
 
 
-def plot_chromosome_variant_hist(chromosome, fit=None, save=True, strand=None):
+def plot_chromosome_variant_hist(
+    chromosome, fit=None, save=True, strand=None, bins_to_fit=-1
+):
     """
     Plots a histogram of the number of downsampled variants for a given tile
 
@@ -313,17 +315,19 @@ def plot_chromosome_variant_hist(chromosome, fit=None, save=True, strand=None):
 
         if fit == "Beta-binomial":
 
-            def f(x, a, b):
-                # b = a * (n / mean - 1.0)
-                return N * betabinom.pmf(x, n, a, b)
+            def b(a):
+                return a * (n / mean - 1.0)
 
-            (a, b), pcov = curve_fit(f, xs, hs)
-            fit_mean = betabinom.mean(n, a, b)
+            def f(x, a):
+                return N * betabinom.pmf(x, n, a, b(a))
+
+            a, pcov = curve_fit(f, xs[:bins_to_fit], hs[bins_to_fit])
+            fit_mean = betabinom.mean(n, a, b(a))
             print("fit mean: {}".format(fit_mean))
-            fit_var = betabinom.var(n, a, b)
+            fit_var = betabinom.var(n, a, b(a))
             print("fit variance: {}".format(fit_var))
 
-            ax.plot(xs, f(xs, a, b), color="k", marker="+")
+            ax.plot(xs, f(xs, a), color="k", marker="+")
 
         plot_title = variant
         if strand is not None:
