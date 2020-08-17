@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from lookup import chromosome_tiles_map, exon_tiles_map, tile_df, tile_data_df
+from lookup import chromosome_tiles_map, exon_tiles_map, tile_df, tile_data_df, juicy_df
 from constants import VARIANTS
 from scipy.stats import betabinom, poisson
 from scipy.optimize import curve_fit
@@ -351,4 +351,29 @@ def plot_chromosome_variant_hist(
             fig.savefig(file_name + ".svg", dpi=1200)
         else:
             plt.show()
+
+
+def plot_juicy_hist():
+    """Plots histograms of the juiciest positions and variants."""
+    df = pd.DataFrame()
+    for i, juicy_row in juicy_df.iterrows():
+        juicy_data_df = tile_data_df(juicy_row["tile"])
+        juicy_data_df = juicy_data_df.loc[
+            (juicy_data_df["position"] == juicy_row["position"])
+            & (juicy_data_df["variant"] == juicy_row["variant"])
+        ]
+        df = df.append(juicy_data_df, ignore_index=True)
+    df = df.loc[df["downsample"] <= 1500]
+
+    fig, ax = plt.subplots()
+
+    maximum = np.amax(df["downsample"])
+    bins = np.arange(-0.5, maximum + 1.5)
+    hs, hs_bin_edges = np.histogram(df["downsample"], bins)
+    print(hs)
+    ax.hist(
+        df["downsample"], bins=bins, color="c", linestyle="-", edgecolor="k",
+    )
+    ax.set(yscale="log")
+    plt.show()
 

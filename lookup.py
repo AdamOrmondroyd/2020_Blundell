@@ -372,9 +372,9 @@ def read_genome():
     for j in tile_df.index:
         tile_genomes[j] = ""
         df = tile_data_df(j, group_by="position")
-        for i, df_row in df.iterrows():
+        for i, row in df.iterrows():
             if i % 3 == 0:
-                tile_genomes[j] += df_row["variant"][0]
+                tile_genomes[j] += row["variant"][0]
         print(tile_genomes[j])
     tile_df["genome"] = tile_genomes
     tile_df.to_csv(file_names["Caroline tiles sorted"])
@@ -388,14 +388,27 @@ def variants_per_position(threshold=1000):
     index = 0
     for j, tile in tile_df.iterrows():
         df = tile_data_df(j, group_by="position")
-        for i, df_row in df.iterrows():
-            if df_row["downsample"] >= threshold:
+        for i, row in df.iterrows():
+            if row["downsample"] >= threshold:
                 juicy_df.loc[index] = [
                     j,
                     tile["chromosome"],
-                    df_row["position"],
-                    df_row["variant"],
-                    df_row["downsample"],
+                    row["position"],
+                    row["variant"],
+                    row["downsample"],
                 ]
                 index += 1
     juicy_df.to_csv(file_names["juicy tiles"])
+
+
+def actual_differences():
+    """Looks in the juicy locations to find actual genetic differences between people."""
+    for j, juicy_row in juicy_df.iterrows():
+        df = tile_data_df(juicy_row["tile"])
+        df = df.loc[
+            (df["position"] == juicy_row["position"])
+            & (df["variant"] == juicy_row["variant"])
+            & (df["downsample"] > 0)
+        ]
+        print(df)
+
