@@ -274,7 +274,7 @@ def plot_chromosome_variant_hist(
     """
     Plots a histogram of the number of downsampled variants for a given tile
 
-    fit = None/"Poisson"/"Beta-binomial"
+    fit = None/"Poisson"/"beta-binomial"
 
     strand = None/"+"/"-"
     """
@@ -294,7 +294,7 @@ def plot_chromosome_variant_hist(
         D = variance / mean  # index of dispersion
         print("mean: {}, variance: {}, variance/mean: {}".format(mean, variance, D))
         n = 6348  # 50th percentile of smaller data file
-        N = len(change_df.index)  # To adjust normalisation of distributions
+        N = len(change_df.index) * n  # To adjust normalisation of distributions
 
         maximum = np.amax(change_df["downsample"])
         print(maximum)
@@ -313,7 +313,7 @@ def plot_chromosome_variant_hist(
             ys = poisson.pmf(xs, mean) * N
             ax.plot(xs, ys, color="k", marker="+")
 
-        if fit == "Beta-binomial":
+        if fit == "beta-binomial":
 
             def b(a):
                 return a * (n / mean - 1.0)
@@ -321,7 +321,7 @@ def plot_chromosome_variant_hist(
             def f(x, a):
                 return N * betabinom.pmf(x, n, a, b(a))
 
-            a, pcov = curve_fit(f, xs[:bins_to_fit], hs[bins_to_fit])
+            a, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
             fit_mean = betabinom.mean(n, a, b(a))
             print("fit mean: {}".format(fit_mean))
             fit_var = betabinom.var(n, a, b(a))
@@ -353,7 +353,7 @@ def plot_chromosome_variant_hist(
             plt.show()
 
 
-def plot_juicy_hist():
+def plot_juicy_hist(fit=None, bins_to_fit=-1):
     """Plots histograms of the juiciest positions and variants."""
     df = pd.DataFrame()
     for i, juicy_row in juicy_df.iterrows():
@@ -362,18 +362,69 @@ def plot_juicy_hist():
             (juicy_data_df["position"] == juicy_row["position"])
             & (juicy_data_df["variant"] == juicy_row["variant"])
         ]
-        df = df.append(juicy_data_df, ignore_index=True)
-    df = df.loc[df["downsample"] <= 1500]
+        # df = df.append(juicy_data_df, ignore_index=True)
+        df = juicy_data_df
+        plot_title = "chr {}, position {}, {}".format(
+            juicy_row["chromosome"], juicy_row["position"], juicy_row["variant"]
+        )
 
-    fig, ax = plt.subplots()
+        df = df.loc[df["downsample"] <= 1500]
 
-    maximum = np.amax(df["downsample"])
-    bins = np.arange(-0.5, maximum + 1.5)
-    hs, hs_bin_edges = np.histogram(df["downsample"], bins)
-    print(hs)
-    ax.hist(
-        df["downsample"], bins=bins, color="c", linestyle="-", edgecolor="k",
-    )
-    ax.set(yscale="log")
-    plt.show()
+        n = 6348
+        N = len(df.index)  # To adjust normalisation of distributions
+        mean = np.mean(df["downsample"])
+        print(mean)
+
+        fig, ax = plt.subplots()
+
+        maximum = np.amax(df["downsample"])
+        bins = np.arange(-0.5, maximum + 1.5)
+        hs, hs_bin_edges = np.histogram(df["downsample"], bins)
+        ax.hist(
+            df["downsample"], bins=bins, color="c", linestyle="-", edgecolor="k",
+        )
+        xs = np.arange(maximum + 1)
+
+        if fit == "Poisson" or fit == "all":
+            ys = poisson.pmf(xs, mean) * N
+            ax.plot(xs, ys, marker="+", color="xkcd:piss yellow", label="Poisson")
+
+        if fit == "beta-binomial" or fit == "both beta-binomial" or fit == "all":
+
+            def b(a):
+                return a * (n / mean - 1.0)
+
+            def f(x, a):
+                return N * betabinom.pmf(x, n, a, b(a))
+
+            a, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+            fit_mean = betabinom.mean(n, a, b(a))
+            print("fit mean: {}".format(fit_mean))
+            fit_var = betabinom.var(n, a, b(a))
+            print("fit variance: {}".format(fit_var))
+
+            ax.plot(xs, f(xs, a), marker="+", color="k", label="beta-binomial")
+
+        if (
+            fit == "beta-binomial fix mean"
+            or fit == "both beta-binomial"
+            or fit == "all"
+        ):
+
+            def f(x, a, b):
+                return N * betabinom.pmf(x, n, a, b)
+
+            (a, b), pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+            fit_mean = betabinom.mean(n, a, b)
+            print("fit mean: {}".format(fit_mean))
+            fit_var = betabinom.var(n, a, b)
+            print("fit variance: {}".format(fit_var))
+
+            ax.plot(
+                xs, f(xs, a, b), marker="+", color="r", label="beta-binomial fixed mean"
+            )
+
+        ax.set(title=plot_title, yscale="log")
+        ax.legend()
+        plt.show()
 
