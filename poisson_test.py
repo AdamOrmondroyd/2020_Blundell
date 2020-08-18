@@ -380,8 +380,21 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
         maximum = np.amax(df["downsample"])
         bins = np.arange(-0.5, maximum + 1.5)
         hs, hs_bin_edges = np.histogram(df["downsample"], bins)
+        print(df["downsample"][:bins_to_fit])
+        print(bins[: bins_to_fit + 1])
         ax.hist(
-            df["downsample"], bins=bins, color="c", linestyle="-", edgecolor="k",
+            df["downsample"],
+            bins=bins[: bins_to_fit + 1],
+            color="green",
+            linestyle="-",
+            edgecolor="k",
+        )
+        ax.hist(
+            df["downsample"],
+            bins=bins[bins_to_fit :],
+            color="c",
+            linestyle="-",
+            edgecolor="k",
         )
         xs = np.arange(maximum + 1)
 
