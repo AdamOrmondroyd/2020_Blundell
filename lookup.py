@@ -200,6 +200,7 @@ def trim_and_flip(exon_number):
 
     The called changes are all relative to the top strand. This function creates files which identify the actual variant seen.
     """
+    downsample_limit = 1500
 
     def flip(sequence_string):
         """Returns complement of the variant as a Biopython Seq"""
@@ -219,7 +220,9 @@ def trim_and_flip(exon_number):
             next_df = next_df.loc[next_cond, :]
             if tile_df.at[i, "strand"] == "-" and len(df.index) != 0:
                 df["variant"] = flip(df["variant"])
+            df = df.loc[df["downsample"] <= downsample_limit]
             df.to_csv(file_names["tile t&f"].format(i))
+    next_df = next_df.loc[next_df["downsample"] <= downsample_limit]
     next_df.to_csv(file_names["tile t&f"].format(tiles.index[-1]))
 
 
@@ -287,17 +290,18 @@ def trim_and_flip_wrapper():
         print("Gene {}".format(i))
 
 
-def refresh_data(redownsample=False):
+def refresh_data(redownsample=False, just_trim_and_flip=False):
     """
     Runs all the functions in turn to freshen up the data
     """
-    if redownsample:
-        downsample()
-        separating_tiles_wrapper()
-    print("Grouping by ID")
-    group_by_ID_wrapper(trim_and_flip=False)
-    print("Grouping by position")
-    group_by_position_wrapper(trim_and_flip=False)
+    if not just_trim_and_flip:
+        if redownsample:
+            downsample()
+            separating_tiles_wrapper()
+        print("Grouping by ID")
+        group_by_ID_wrapper(trim_and_flip=False)
+        print("Grouping by position")
+        group_by_position_wrapper(trim_and_flip=False)
     print("Trimming and flipping")
     trim_and_flip_wrapper()
     print("Grouping by ID (t&f)")
@@ -387,6 +391,7 @@ def variants_per_position(threshold=1000):
     )
     index = 0
     for j, tile in tile_df.iterrows():
+        print(j)
         df = tile_data_df(j, group_by="position")
         for i, row in df.iterrows():
             if row["downsample"] >= threshold:

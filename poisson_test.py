@@ -368,10 +368,11 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
             juicy_row["chromosome"], juicy_row["position"], juicy_row["variant"]
         )
 
-        df = df.loc[df["downsample"] <= 1500]
+        # df = df.loc[df["downsample"] <= 1500]
 
         n = 6348
         N = len(df.index)  # To adjust normalisation of distributions
+        print("N = {}".format(N))
         mean = np.mean(df["downsample"])
         print(mean)
 
@@ -380,8 +381,7 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
         maximum = np.amax(df["downsample"])
         bins = np.arange(-0.5, maximum + 1.5)
         hs, hs_bin_edges = np.histogram(df["downsample"], bins)
-        print(df["downsample"][:bins_to_fit])
-        print(bins[: bins_to_fit + 1])
+
         ax.hist(
             df["downsample"],
             bins=bins[: bins_to_fit + 1],
@@ -391,7 +391,7 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
         )
         ax.hist(
             df["downsample"],
-            bins=bins[bins_to_fit :],
+            bins=bins[bins_to_fit:],
             color="c",
             linestyle="-",
             edgecolor="k",
@@ -436,6 +436,8 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
             ax.plot(
                 xs, f(xs, a, b), marker="+", color="r", label="beta-binomial fixed mean"
             )
+
+        ax.plot([xs[0], xs[-1]], [1.0 / N, 1.0 / N], label="1/N")
 
         ax.set(title=plot_title, yscale="log")
         ax.legend()
