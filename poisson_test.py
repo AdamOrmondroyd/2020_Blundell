@@ -355,20 +355,18 @@ def plot_chromosome_variant_hist(
 
 def plot_juicy_hist(fit=None, bins_to_fit=-1):
     """Plots histograms of the juiciest positions and variants."""
-    df = pd.DataFrame()
+
     for i, juicy_row in juicy_df.iterrows():
         juicy_data_df = tile_data_df(juicy_row["tile"])
         juicy_data_df = juicy_data_df.loc[
             (juicy_data_df["position"] == juicy_row["position"])
             & (juicy_data_df["variant"] == juicy_row["variant"])
         ]
-        # df = df.append(juicy_data_df, ignore_index=True)
+
         df = juicy_data_df
         plot_title = "chr {}, position {}, {}".format(
             juicy_row["chromosome"], juicy_row["position"], juicy_row["variant"]
         )
-
-        # df = df.loc[df["downsample"] <= 1500]
 
         n = 6348
         N = len(df.index)  # To adjust normalisation of distributions
