@@ -8,7 +8,7 @@ from scipy.optimize import curve_fit, fsolve, newton
 from collections.abc import Iterable
 
 
-def mean_var(tile_numbers, variant, trim_and_flip):
+def mean_var(tile_numbers, variant, trim_and_flip=True):
     """Returns mean and var for a given tile and variant."""
     df = pd.DataFrame()
     if not isinstance(tile_numbers, Iterable):
@@ -23,6 +23,81 @@ def mean_var(tile_numbers, variant, trim_and_flip):
     mean = np.mean(df["downsample"])
     variance = np.var(df["downsample"])
     return mean, variance
+
+
+def position_mean_var(tile_number, position, trim_and_flip=True):
+    """Returns mean and var for a given position."""
+    df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
+
+    df = df.loc[df["position"] == position]
+    return np.mean(df["downsample"]), np.var(df["downsample"])
+
+
+def plot_tile_mean_var(tile_number, save=False):
+    """Plots all the means and variances for all positions on a given tile."""
+    for variant in VARIANTS:
+        print(variant)
+        fig, ax = plt.subplots(3, figsize=(8, 8))
+
+        df = tile_data_df(tile_number)
+        df = df.loc[df["variant"] == variant]
+        positions = pd.unique(df["position"])
+        length = len(positions)
+        means = np.zeros(length)
+        variances = np.zeros(length)
+
+        for i, position in enumerate(positions):
+            means[i], variances[i] = position_mean_var(tile_number, position)
+
+        non_zero_means = means[np.nonzero(means)]
+        non_zero_variances = variances[np.nonzero(means)]
+        non_zero_positions = positions[np.nonzero(means)]
+
+        Ds = non_zero_variances / non_zero_means
+
+        marker = "+"
+
+        ax[0].plot(
+            positions, means, label="means", marker=marker, linestyle="None",
+        )
+
+        ax[1].plot(
+            positions, variances, label="variances", marker=marker, linestyle="None",
+        )
+
+        ax[2].plot(
+            non_zero_positions,
+            Ds,
+            label="index of dispersion",
+            marker=marker,
+            linestyle="None",
+        )
+
+        ax[0].set(
+            title="{} means".format(variant), xlabel="position", ylabel="mean",
+        )
+        ax[1].set(title="variances", xlabel="position", ylabel="variance")
+        ax[2].set(
+            title="Index of dispersion", xlabel="position", ylabel="D = Var/mean",
+        )
+        for i in ax:
+            i.ticklabel_format(useOffset=False, style="plain")
+            i.set(yscale="log")
+
+        fig.tight_layout()
+        if save:
+            file_name = "plots\\means_and_variances\\{}_mean_var".format(variant)
+            if show_strands:
+                file_name += "_strands"
+            if trim_and_flip:
+                file_name += "_t&f"
+            if group_chromosomes:
+                file_name += "_group_chromosomes"
+            fig.savefig(file_name + ".png")
+            fig.savefig(file_name + ".svg", dpi=1200)
+        else:
+            plt.show()
+        plt.close("all")
 
 
 def plot_all_mean_var(
