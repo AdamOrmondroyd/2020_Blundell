@@ -9,9 +9,7 @@ from collections.abc import Iterable
 
 
 def mean_var(tile_numbers, variant, trim_and_flip):
-    """
-    Returns  of mean and var for a given tile and variant.
-    """
+    """Returns mean and var for a given tile and variant."""
     df = pd.DataFrame()
     if not isinstance(tile_numbers, Iterable):
         tile_numbers = [tile_numbers]
@@ -30,9 +28,7 @@ def mean_var(tile_numbers, variant, trim_and_flip):
 def plot_all_mean_var(
     show_strands=True, save=True, trim_and_flip=True, group_chromosomes=False
 ):
-    """
-    Plots the mean, variance and the index of dispersion for all tiles.
-    """
+    """Plots the mean, variance and the index of dispersion for all tiles."""
     for variant in VARIANTS:
         print(variant)
         fig, ax = plt.subplots(3, figsize=(8, 8))

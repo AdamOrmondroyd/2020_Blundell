@@ -73,9 +73,7 @@ file_names = {
 
 
 def sorter(chromosome):
-    """
-    Converts X and Y to 23 and 24 for sorting chromosomes.
-    """
+    """Converts X and Y to 23 and 24 for sorting chromosomes."""
     if chromosome == "X":
         return 23
     elif chromosome == "Y":

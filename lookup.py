@@ -30,9 +30,7 @@ sample_column_names = [
 
 
 def percentile(q):
-    """
-    Finds the qth percentile of the number of consensus molecules.
-    """
+    """Finds the qth percentile of the number of consensus molecules."""
     Nss = []
     for i, chunk in enumerate(
         pd.read_csv(
@@ -57,7 +55,7 @@ def downsample(q=50):
     """
     Downsamples full_data.txt to qth percentile of number of consensus molecules.
 
-    Defaults to 50th percentile
+    Defaults to 50th percentile.
     """
     if os.path.isfile(file_names["downsampled data"]):
         os.remove(file_names["downsampled data"])
@@ -85,9 +83,7 @@ def downsample(q=50):
 
 
 def sort_caroline_tiles():
-    """
-    Orders data from Caroline by chromosome.
-    """
+    """Orders data from Caroline by chromosome."""
     df = pd.read_csv(
         file_names["Caroline tiles"],
         header=None,
@@ -169,9 +165,7 @@ def tile_data_df(tile_number, group_by=None, trim_and_flip=True):
 
 
 def group_by_position(tile_number, trim_and_flip=True):
-    """
-    Groups the specified tile by position.
-    """
+    """Groups the specified tile by position."""
     df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
     df = df.drop(columns=["sample ID"])
     df = df.groupby(["position", "chromosome", "variant"]).agg(aggregation_functions)
@@ -182,9 +176,7 @@ def group_by_position(tile_number, trim_and_flip=True):
 
 
 def group_by_ID(tile_number, trim_and_flip=True):
-    """
-    Groups the specified tile by ID (person and age).
-    """
+    """Groups the specified tile by ID (person and age)."""
     df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
     df = df.drop(columns=["position"])
     df = df.groupby(["sample ID", "chromosome", "variant"]).agg(aggregation_functions)
@@ -230,27 +222,21 @@ def trim_and_flip(exon_number):
 
 
 def group_by_position_wrapper(trim_and_flip=True):
-    """
-    Repeats group by position for all tiles.
-    """
+    """Repeats group by position for all tiles."""
     for i in np.arange(0, 1063):
         group_by_position(i, trim_and_flip)
         print(i)
 
 
 def group_by_ID_wrapper(trim_and_flip=True):
-    """
-    Repeats group by ID for all tiles.
-    """
+    """Repeats group by ID for all tiles."""
     for i in np.arange(0, 1063):
         group_by_ID(i, trim_and_flip)
         print(i)
 
 
 def separating_tiles_wrapper():
-    """
-    Separates tiles in chunks of 100 to avoid memory issues.
-    """
+    """Separates tiles in chunks of 100 to avoid memory issues."""
     print("Separating tiles 0 to 99")
     separating_tiles(np.arange(0, 100))
     print("Separating tiles 100 to 199")
@@ -276,9 +262,7 @@ def separating_tiles_wrapper():
 
 
 def group_strands_wrapper():
-    """
-    Repeats group strands for all exons
-    """
+    """Repeats group strands for all exons"""
     for i in np.arange(len(exon_df.index)):
         print(i)
         group_strands(i)
@@ -291,9 +275,7 @@ def trim_and_flip_wrapper():
 
 
 def refresh_data(redownsample=False, just_trim_and_flip=False):
-    """
-    Runs all the functions in turn to freshen up the data
-    """
+    """Runs all the functions in turn to freshen up the data"""
     if not just_trim_and_flip:
         if redownsample:
             downsample()
@@ -342,9 +324,7 @@ juicy_df = pd.read_csv(file_names["juicy tiles"], index_col=0)
 
 
 def empty_tiles():
-    """
-    Identifies any empty tiles.
-    """
+    """Identifies any empty tiles."""
     for i, exon in exon_df.iterrows():
         for j, tile in exon_tiles_map[i].iterrows():
             if 0 == len(tile_data_df(j).index):
@@ -352,9 +332,7 @@ def empty_tiles():
 
 
 def tiles_not_in_exons():
-    """
-    Identifies any tiles that don't appear in any exons
-    """
+    """Identifies any tiles that don't appear in any exons"""
     tiles_in_exons = []
     for i in exon_df.index:
         tiles_in_exons.extend(exon_tiles_map[i].index)
