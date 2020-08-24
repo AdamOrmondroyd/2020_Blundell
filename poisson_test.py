@@ -63,14 +63,18 @@ def plot_all_mean_var(
             ax[1].plot(
                 xs, variances, label="variances", marker=marker, linestyle="None",
             )
-            if means != 0:
-                ax[2].plot(
-                    xs,
-                    variances / means,
-                    label="index of dispersion",
-                    marker=marker,
-                    linestyle="None",
-                )
+            if not group_chromosomes:
+                xs = xs[np.nonzero(means)]
+                variances = variances[np.nonzero(means)]
+                means = means[np.nonzero(means)]
+
+            ax[2].plot(
+                xs,
+                variances / means,
+                label="index of dispersion",
+                marker=marker,
+                linestyle="None",
+            )
         for j, chromosome in enumerate(pd.unique(tile_df["chromosome"])):
             chr_tile_df = tile_df.loc[
                 (tile_df["chromosome"] == chromosome) & (tile_df["strand"] == "-")
@@ -97,14 +101,13 @@ def plot_all_mean_var(
             ax[1].plot(
                 xs, variances, label="variances", marker=marker, linestyle="None",
             )
-            if means != 0:
-                ax[2].plot(
-                    xs,
-                    variances / means,
-                    label="means",
-                    marker=marker,
-                    linestyle="None",
-                )
+            if not group_chromosomes:
+                xs = xs[np.nonzero(means)]
+                variances = variances[np.nonzero(means)]
+                means = means[np.nonzero(means)]
+            ax[2].plot(
+                xs, variances / means, label="means", marker=marker, linestyle="None",
+            )
         ax[0].set(
             title="{} means".format(variant), xlabel="tile", ylabel="mean", yscale="log"
         )
@@ -266,6 +269,9 @@ def plot_exon_mean_var(exon_number, save=True, trim_and_flip=True):
         else:
             plt.show()
         plt.close("all")
+
+
+# def pl
 
 
 def plot_chromosome_variant_hist(
