@@ -170,10 +170,16 @@ def plot_all_mean_var(
                     marker=marker,
                     linestyle="None",
                 )
-
-        axs[0].set(
-            title="{} means".format(variant), xlabel="tile", ylabel="mean", yscale="log"
-        )
+        axs0_title = "{} means".format(variant)
+        if show_strands:
+            axs0_title += " strands"
+        if trim_and_flip:
+            axs0_title += " t&f"
+        if group_chromosomes:
+            axs0_title += " group chromosomes"
+        if age != "all":
+            axs0_title += " age {}".format(age)
+        axs[0].set(title=axs0_title, xlabel="tile", ylabel="mean", yscale="log")
         axs[1].set(title="variances", xlabel="tile", ylabel="variance", yscale="log")
         axs[2].set(
             title="Index of dispersion",
@@ -181,16 +187,14 @@ def plot_all_mean_var(
             ylabel="D = Var/mean",
             yscale="log",
         )
-        if age != "all":
-            axs[0].set(title="{} means, age {}".format(variant, age))
+
         fig.tight_layout()
         if save:
+            location = "plots\\means_and_variances\\"
             if age != "all":
-                file_name = "plots\\means_and_variances\\split_ages\\{}_mean_var".format(
-                    variant
-                )
-            else:
-                file_name = "plots\\means_and_variances\\{}_mean_var".format(variant)
+                location += "split_ages\\"
+
+            file_name = "{}_mean_var".format(variant)
             if show_strands:
                 file_name += "_strands"
             if trim_and_flip:
@@ -199,8 +203,8 @@ def plot_all_mean_var(
                 file_name += "_group_chromosomes"
             if age != "all":
                 file_name += "_age_{}".format(age)
-            fig.savefig(file_name + ".png")
-            fig.savefig(file_name + ".svg", dpi=1200)
+            fig.savefig(location + file_name + ".png")
+            fig.savefig(location + file_name + ".svg", dpi=1200)
         else:
             plt.show()
         plt.close("all")
