@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from constants import row_age_map
 from lookup import chromosome_tiles_map, exon_tiles_map, tile_df, tile_data_df, juicy_df
 from constants import VARIANTS
 from scipy.stats import betabinom, poisson
@@ -8,7 +9,7 @@ from scipy.optimize import curve_fit, fsolve, newton
 from collections.abc import Iterable
 
 
-def mean_var(tile_numbers, variant, trim_and_flip=True):
+def mean_var(tile_numbers, variant, trim_and_flip=True, age="all"):
     """Returns mean and var for a given tile and variant."""
     df = pd.DataFrame()
     if not isinstance(tile_numbers, Iterable):
@@ -19,6 +20,10 @@ def mean_var(tile_numbers, variant, trim_and_flip=True):
     if True == df.empty:
         return 0, 0
     df = df.loc[df["variant"] == variant]
+    if True == df.empty:
+        return 0, 0
+    if age != "all":
+        df = df.loc[row_age_map(df["sample ID"]) == age]
 
     mean = np.mean(df["downsample"])
     variance = np.var(df["downsample"])
@@ -33,7 +38,7 @@ def position_mean_var(tile_number, position, trim_and_flip=True):
     return np.mean(df["downsample"]), np.var(df["downsample"])
 
 
-def plot_tile_mean_var(tile_number, save=False):
+def plot_tile_mean_var(tile_number, save=False, age="all"):
     """Plots all the means and variances for all positions on a given tile."""
     for variant in VARIANTS:
         print(variant)
@@ -41,6 +46,9 @@ def plot_tile_mean_var(tile_number, save=False):
 
         df = tile_data_df(tile_number)
         df = df.loc[df["variant"] == variant]
+        if age != "all":
+            df = df.loc[row_age_map(df["sample ID"]) == age]
+
         positions = pd.unique(df["position"])
         length = len(positions)
         means = np.zeros(length)
@@ -86,7 +94,9 @@ def plot_tile_mean_var(tile_number, save=False):
 
         fig.tight_layout()
         if save:
-            file_name = "plots\\means_and_variances\\{}_mean_var".format(variant)
+            file_name = "plots\\means_and_variances\\{}_mean_var_positions".format(
+                variant
+            )
             if show_strands:
                 file_name += "_strands"
             if trim_and_flip:
@@ -101,84 +111,66 @@ def plot_tile_mean_var(tile_number, save=False):
 
 
 def plot_all_mean_var(
-    show_strands=True, save=True, trim_and_flip=True, group_chromosomes=False
+    show_strands=True,
+    save=True,
+    trim_and_flip=True,
+    group_chromosomes=False,
+    age="all",
+    chromosome="all",
 ):
     """Plots the mean, variance and the index of dispersion for all tiles."""
     for variant in VARIANTS:
         print(variant)
         fig, ax = plt.subplots(3, figsize=(8, 8))
 
-        for j, chromosome in enumerate(pd.unique(tile_df["chromosome"])):
-            chr_tile_df = tile_df.loc[
-                (tile_df["chromosome"] == chromosome) & (tile_df["strand"] == "+")
-            ]
-            if group_chromosomes:
-                means, variances = mean_var(chr_tile_df.index, variant, trim_and_flip)
-                xs = j
-            else:
-                means = np.zeros(len(chr_tile_df.index))
-                variances = np.zeros(len(chr_tile_df.index))
-                for i, index in enumerate(chr_tile_df.index):
-                    print(i)
-                    means[i], variances[i] = mean_var(index, variant, trim_and_flip)
-                xs = chr_tile_df.index  # janky trick to get x axis to work
-            if show_strands:
-                marker = "$+$"
-            else:
-                marker = "${}$".format(chromosome)
+        for strand in ["+", "-"]:
 
-            ax[0].plot(
-                xs, means, label="means", marker=marker, linestyle="None",
-            )
+            for j, chromosome in enumerate(pd.unique(tile_df["chromosome"])):
+                print(j)
+                chr_tile_df = tile_df.loc[
+                    (tile_df["chromosome"] == chromosome)
+                    & (tile_df["strand"] == strand)
+                ]
 
-            ax[1].plot(
-                xs, variances, label="variances", marker=marker, linestyle="None",
-            )
-            if not group_chromosomes:
-                xs = xs[np.nonzero(means)]
-                variances = variances[np.nonzero(means)]
-                means = means[np.nonzero(means)]
+                if group_chromosomes:
+                    means, variances = mean_var(
+                        chr_tile_df.index, variant, trim_and_flip, age
+                    )
+                    xs = j
+                else:
+                    means = np.zeros(len(chr_tile_df.index))
+                    variances = np.zeros(len(chr_tile_df.index))
+                    for i, index in enumerate(chr_tile_df.index):
+                        print(i)
+                        means[i], variances[i] = mean_var(
+                            index, variant, trim_and_flip, age
+                        )
+                    xs = chr_tile_df.index  # janky trick to get x axis to work
+                if show_strands:
+                    marker = "${}$".format(strand)
+                else:
+                    marker = "${}$".format(chromosome)
 
-            ax[2].plot(
-                xs,
-                variances / means,
-                label="index of dispersion",
-                marker=marker,
-                linestyle="None",
-            )
-        for j, chromosome in enumerate(pd.unique(tile_df["chromosome"])):
-            chr_tile_df = tile_df.loc[
-                (tile_df["chromosome"] == chromosome) & (tile_df["strand"] == "-")
-            ]
-            if group_chromosomes:
-                means, variances = mean_var(chr_tile_df.index, variant, trim_and_flip)
-                xs = j
-            else:
-                means = np.zeros(len(chr_tile_df.index))
-                variances = np.zeros(len(chr_tile_df.index))
-                for i, index in enumerate(chr_tile_df.index):
-                    print(i)
-                    means[i], variances[i] = mean_var(index, variant, trim_and_flip)
-                xs = chr_tile_df.index  # janky trick to get x axis to work
-            if show_strands:
-                marker = "$-$"
-            else:
-                marker = "${}$".format(chromosome)
+                ax[0].plot(
+                    xs, means, label="means", marker=marker, linestyle="None",
+                )
 
-            ax[0].plot(
-                xs, means, label="means", marker=marker, linestyle="None",
-            )
+                ax[1].plot(
+                    xs, variances, label="variances", marker=marker, linestyle="None",
+                )
+                if not group_chromosomes:
+                    xs = xs[np.nonzero(means)]
+                    variances = variances[np.nonzero(means)]
+                    means = means[np.nonzero(means)]
 
-            ax[1].plot(
-                xs, variances, label="variances", marker=marker, linestyle="None",
-            )
-            if not group_chromosomes:
-                xs = xs[np.nonzero(means)]
-                variances = variances[np.nonzero(means)]
-                means = means[np.nonzero(means)]
-            ax[2].plot(
-                xs, variances / means, label="means", marker=marker, linestyle="None",
-            )
+                ax[2].plot(
+                    xs,
+                    variances / means,
+                    label="index of dispersion",
+                    marker=marker,
+                    linestyle="None",
+                )
+
         ax[0].set(
             title="{} means".format(variant), xlabel="tile", ylabel="mean", yscale="log"
         )
@@ -189,15 +181,24 @@ def plot_all_mean_var(
             ylabel="D = Var/mean",
             yscale="log",
         )
+        if age != "all":
+            ax[0].set(title="{} means, age {}".format(variant, age))
         fig.tight_layout()
         if save:
-            file_name = "plots\\means_and_variances\\{}_mean_var".format(variant)
+            if age != "all":
+                file_name = "plots\\means_and_variances\\split_ages\\{}_mean_var".format(
+                    variant
+                )
+            else:
+                file_name = "plots\\means_and_variances\\{}_mean_var".format(variant)
             if show_strands:
                 file_name += "_strands"
             if trim_and_flip:
                 file_name += "_t&f"
             if group_chromosomes:
                 file_name += "_group_chromosomes"
+            if age != "all":
+                file_name += "_age_{}".format(age)
             fig.savefig(file_name + ".png")
             fig.savefig(file_name + ".svg", dpi=1200)
         else:
@@ -232,9 +233,6 @@ def plot_exon_mean_var(exon_number, save=True, trim_and_flip=True):
         else:
             plt.show()
         plt.close("all")
-
-
-# def pl
 
 
 def plot_chromosome_variant_hist(

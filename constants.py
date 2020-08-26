@@ -82,4 +82,12 @@ def sorter(chromosome):
         return int(chromosome)
 
 
-vec_sorter = np.vectorize(sorter)
+sorter = np.vectorize(sorter)
+
+
+def row_age_map(sample_id):
+    """Gets the age from a data row."""
+    return lane_age_map[sample_id[:5]]
+
+
+row_age_map = np.vectorize(row_age_map)

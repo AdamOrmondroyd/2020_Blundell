@@ -13,7 +13,7 @@ from constants import (
     file_names,
     LANES,
     PEOPLE,
-    vec_sorter,
+    sorter,
 )
 
 
@@ -92,7 +92,7 @@ def sort_caroline_tiles():
     )
     df["chromosome"] = df["chromosome"].str[3:]
     df = df.sort_values(
-        by="chromosome", kind="mergesort", key=vec_sorter, ignore_index=True,
+        by="chromosome", kind="mergesort", key=sorter, ignore_index=True,
     )  # use mergesort for stability
 
     df.to_csv(file_names["Caroline tiles sorted"], sep="\t")
