@@ -42,7 +42,7 @@ def plot_tile_mean_var(tile_number, save=False, age="all"):
     """Plots all the means and variances for all positions on a given tile."""
     for variant in VARIANTS:
         print(variant)
-        fig, ax = plt.subplots(3, figsize=(8, 8))
+        fig, axs = plt.subplots(3, figsize=(8, 8))
 
         df = tile_data_df(tile_number)
         df = df.loc[df["variant"] == variant]
@@ -65,15 +65,15 @@ def plot_tile_mean_var(tile_number, save=False, age="all"):
 
         marker = "+"
 
-        ax[0].plot(
+        axs[0].plot(
             positions, means, label="means", marker=marker, linestyle="None",
         )
 
-        ax[1].plot(
+        axs[1].plot(
             positions, variances, label="variances", marker=marker, linestyle="None",
         )
 
-        ax[2].plot(
+        axs[2].plot(
             non_zero_positions,
             Ds,
             label="index of dispersion",
@@ -81,16 +81,16 @@ def plot_tile_mean_var(tile_number, save=False, age="all"):
             linestyle="None",
         )
 
-        ax[0].set(
+        axs[0].set(
             title="{} means".format(variant), xlabel="position", ylabel="mean",
         )
-        ax[1].set(title="variances", xlabel="position", ylabel="variance")
-        ax[2].set(
+        axs[1].set(title="variances", xlabel="position", ylabel="variance")
+        axs[2].set(
             title="Index of dispersion", xlabel="position", ylabel="D = Var/mean",
         )
-        for i in ax:
-            i.ticklabel_format(useOffset=False, style="plain")
-            i.set(yscale="log")
+        for ax in axs:
+            ax.ticklabel_format(useOffset=False, style="plain")
+            ax.set(yscale="log")
 
         fig.tight_layout()
         if save:
@@ -121,7 +121,7 @@ def plot_all_mean_var(
     """Plots the mean, variance and the index of dispersion for all tiles."""
     for variant in VARIANTS:
         print(variant)
-        fig, ax = plt.subplots(3, figsize=(8, 8))
+        fig, axs = plt.subplots(3, figsize=(8, 8))
 
         for strand in ["+", "-"]:
 
@@ -151,11 +151,11 @@ def plot_all_mean_var(
                 else:
                     marker = "${}$".format(chromosome)
 
-                ax[0].plot(
+                axs[0].plot(
                     xs, means, label="means", marker=marker, linestyle="None",
                 )
 
-                ax[1].plot(
+                axs[1].plot(
                     xs, variances, label="variances", marker=marker, linestyle="None",
                 )
                 if not group_chromosomes:
@@ -163,7 +163,7 @@ def plot_all_mean_var(
                     variances = variances[np.nonzero(means)]
                     means = means[np.nonzero(means)]
 
-                ax[2].plot(
+                axs[2].plot(
                     xs,
                     variances / means,
                     label="index of dispersion",
@@ -171,18 +171,18 @@ def plot_all_mean_var(
                     linestyle="None",
                 )
 
-        ax[0].set(
+        axs[0].set(
             title="{} means".format(variant), xlabel="tile", ylabel="mean", yscale="log"
         )
-        ax[1].set(title="variances", xlabel="tile", ylabel="variance", yscale="log")
-        ax[2].set(
+        axs[1].set(title="variances", xlabel="tile", ylabel="variance", yscale="log")
+        axs[2].set(
             title="Index of dispersion",
             xlabel="tile",
             ylabel="D = Var/mean",
             yscale="log",
         )
         if age != "all":
-            ax[0].set(title="{} means, age {}".format(variant, age))
+            axs[0].set(title="{} means, age {}".format(variant, age))
         fig.tight_layout()
         if save:
             if age != "all":
@@ -213,20 +213,22 @@ def plot_exon_mean_var(exon_number, save=True, trim_and_flip=True):
 
     for variant in VARIANTS:
         print(variant)
-        fig, ax = plt.subplots(3, figsize=(8, 8))
+        fig, axs = plt.subplots(3, figsize=(8, 8))
         for i in df.index:
             print(i)
             means[i], variances[i] = mean_var(i, variant, trim_and_flip)
-        ax[0].plot(df.index, means, label="means", marker="+", linestyle="None")
-        ax[0].set(title="means", xlabel="tile", ylabel="mean", yscale="log")
+        axs[0].plot(df.index, means, label="means", marker="+", linestyle="None")
+        axs[0].set(title="means", xlabel="tile", ylabel="mean", yscale="log")
 
-        ax[1].plot(df.index, variances, label="variances", marker="+", linestyle="None")
-        ax[1].set(title="variances", xlabel="tile", ylabel="variance", yscale="log")
+        axs[1].plot(
+            df.index, variances, label="variances", marker="+", linestyle="None"
+        )
+        axs[1].set(title="variances", xlabel="tile", ylabel="variance", yscale="log")
 
-        ax[2].plot(
+        axs[2].plot(
             df.index, variances / means, label="means", marker="+", linestyle="None"
         )
-        ax[2].set(title="ratios", xlabel="tile", ylabel="ratios", yscale="log")
+        axs[2].set(title="ratios", xlabel="tile", ylabel="ratios", yscale="log")
         fig.tight_layout()
         if save:
             fig.savefig("plots\\means_and_variances\\{}_mean_var.png".format(variant))
