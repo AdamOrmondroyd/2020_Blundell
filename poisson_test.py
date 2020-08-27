@@ -2,7 +2,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from constants import row_age_map
-from lookup import chromosome_tiles_map, exon_tiles_map, tile_df, tile_data_df, juicy_df
+from lookup import (
+    chromosomes,
+    chromosome_tiles_map,
+    exon_tiles_map,
+    tile_df,
+    tile_data_df,
+    juicy_df,
+)
 from constants import VARIANTS
 from scipy.stats import betabinom, poisson
 from scipy.optimize import curve_fit, fsolve, newton
@@ -125,7 +132,7 @@ def plot_all_mean_var(
 
         for strand in ["+", "-"]:
 
-            for j, chromosome in enumerate(pd.unique(tile_df["chromosome"])):
+            for j, chromosome in enumerate(chromosomes):
                 print(j)
                 chr_tile_df = tile_df.loc[
                     (tile_df["chromosome"] == chromosome)
@@ -208,6 +215,30 @@ def plot_all_mean_var(
         else:
             plt.show()
         plt.close("all")
+
+
+def plot_len_tiles(show_strands=False):
+    """Plots length of the tiles."""
+    for variant in VARIANTS:
+        print(variant)
+        fig, ax = plt.subplots()
+        for strand in ["+", "-"]:
+            for j, chromosome in enumerate(chromosomes):
+                print(j)
+                chr_tile_df = tile_df.loc[
+                    (tile_df["chromosome"] == chromosome)
+                    & (tile_df["strand"] == strand)
+                ]
+                xs = chr_tile_df.index
+                lengths = chr_tile_df["end"] - chr_tile_df["start"]
+
+                if show_strands:
+                    marker = "${}$".format(strand)
+                else:
+                    marker = "${}$".format(chromosome)
+
+                ax.plot(xs, lengths, label="lengths", marker=marker, linestyle="None")
+        plt.show()
 
 
 def plot_exon_mean_var(exon_number, save=True, trim_and_flip=True):
