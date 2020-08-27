@@ -313,9 +313,11 @@ for i, exon in exon_df.iterrows():
     ]
 
 chromosome_tiles_map = {}
+chromosome_exon_map = {}
 chromosomes = tile_df["chromosome"].unique()
 for chromosome in chromosomes:
     chromosome_tiles_map[chromosome] = tile_df.loc[tile_df["chromosome"] == chromosome]
+    chromosome_exon_map[chromosome] = exon_df.loc[exon_df["chromosome"] == chromosome]
 
 juicy_df = pd.read_csv(file_names["juicy tiles"], index_col=0)
 
