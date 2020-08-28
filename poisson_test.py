@@ -130,9 +130,13 @@ def plot_all_mean_var(
         print(variant)
         fig, axs = plt.subplots(3, figsize=(8, 8))
 
-        for strand in ["+", "-"]:
+        if chromosome == "all":
+            chrs_to_enumerate = chromosomes
+        else:
+            chrs_to_enumerate = chromosome
 
-            for j, chromosome in enumerate(chromosomes):
+        for strand in ["+", "-"]:
+            for j, chromosome in enumerate(chrs_to_enumerate):
                 print(j)
                 chr_tile_df = tile_df.loc[
                     (tile_df["chromosome"] == chromosome)
@@ -217,28 +221,36 @@ def plot_all_mean_var(
         plt.close("all")
 
 
-def plot_len_tiles(show_strands=False):
+def plot_len_tiles(show_strands=False, chromosome="all"):
     """Plots length of the tiles."""
-    for variant in VARIANTS:
-        print(variant)
-        fig, ax = plt.subplots()
-        for strand in ["+", "-"]:
-            for j, chromosome in enumerate(chromosomes):
-                print(j)
-                chr_tile_df = tile_df.loc[
-                    (tile_df["chromosome"] == chromosome)
-                    & (tile_df["strand"] == strand)
-                ]
-                xs = chr_tile_df.index
-                lengths = chr_tile_df["end"] - chr_tile_df["start"]
+    # for variant in VARIANTS:
+    #     print(variant)
+    fig, ax = plt.subplots()
 
-                if show_strands:
-                    marker = "${}$".format(strand)
-                else:
-                    marker = "${}$".format(chromosome)
+    plot_title = "tile lengths"
+    if chromosome == "all":
+        chrs_to_enumerate = chromosomes
+    else:
+        chrs_to_enumerate = chromosome
+        plot_title += " {}".format(chromosome)
 
-                ax.plot(xs, lengths, label="lengths", marker=marker, linestyle="None")
-        plt.show()
+    for strand in ["+", "-"]:
+        for j, chromosome in enumerate(chrs_to_enumerate):
+            print(j)
+            chr_tile_df = tile_df.loc[
+                (tile_df["chromosome"] == chromosome) & (tile_df["strand"] == strand)
+            ]
+            xs = chr_tile_df.index
+            lengths = chr_tile_df["end"] - chr_tile_df["start"]
+
+            if show_strands:
+                marker = "${}$".format(strand)
+            else:
+                marker = "${}$".format(chromosome)
+
+            ax.plot(xs, lengths, label="lengths", marker=marker, linestyle="None")
+    ax.set(title=plot_title, xlabel="tile number", ylabel="length of tile")
+    plt.show()
 
 
 def plot_exon_mean_var(exon_number, save=True, trim_and_flip=True):
