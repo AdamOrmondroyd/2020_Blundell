@@ -124,11 +124,15 @@ def plot_all_mean_var(
     group_chromosomes=False,
     age="all",
     chromosome="all",
+    var_against_mean=False,
 ):
     """Plots the mean, variance and the index of dispersion for all tiles."""
     for variant in VARIANTS:
         print(variant)
-        fig, axs = plt.subplots(3, figsize=(8, 8))
+        if var_against_mean:
+            fig, ax = plt.subplots()
+        else:
+            fig, axs = plt.subplots(3, figsize=(8, 8))
 
         if chromosome == "all":
             chrs_to_enumerate = chromosomes
@@ -162,26 +166,42 @@ def plot_all_mean_var(
                 else:
                     marker = "${}$".format(chromosome)
 
-                axs[0].plot(
-                    xs, means, label="means", marker=marker, linestyle="None",
-                )
+                if var_against_mean:
+                    ax.plot(
+                        means,
+                        variances,
+                        label="variances against means",
+                        marker=marker,
+                        linestyle="None",
+                    )
+                else:
+                    axs[0].plot(
+                        xs, means, label="means", marker=marker, linestyle="None",
+                    )
 
-                axs[1].plot(
-                    xs, variances, label="variances", marker=marker, linestyle="None",
-                )
-                if not group_chromosomes:
-                    xs = xs[np.nonzero(means)]
-                    variances = variances[np.nonzero(means)]
-                    means = means[np.nonzero(means)]
+                    axs[1].plot(
+                        xs,
+                        variances,
+                        label="variances",
+                        marker=marker,
+                        linestyle="None",
+                    )
+                    if not group_chromosomes:
+                        xs = xs[np.nonzero(means)]
+                        variances = variances[np.nonzero(means)]
+                        means = means[np.nonzero(means)]
 
-                axs[2].plot(
-                    xs,
-                    variances / means,
-                    label="index of dispersion",
-                    marker=marker,
-                    linestyle="None",
-                )
-        axs0_title = "{} means".format(variant)
+                    axs[2].plot(
+                        xs,
+                        variances / means,
+                        label="index of dispersion",
+                        marker=marker,
+                        linestyle="None",
+                    )
+        if var_against_mean:
+            axs0_title = "{} var against mean".format(variant)
+        else:
+            axs0_title = "{} means".format(variant)
         if show_strands:
             axs0_title += " strands"
         if trim_and_flip:
@@ -190,20 +210,34 @@ def plot_all_mean_var(
             axs0_title += " group chromosomes"
         if age != "all":
             axs0_title += " age {}".format(age)
-        axs[0].set(title=axs0_title, xlabel="tile", ylabel="mean", yscale="log")
-        axs[1].set(title="variances", xlabel="tile", ylabel="variance", yscale="log")
-        axs[2].set(
-            title="Index of dispersion",
-            xlabel="tile",
-            ylabel="D = Var/mean",
-            yscale="log",
-        )
+        if var_against_mean:
+            axs0_title += " var against mean"
+            ax.set(
+                title=axs0_title,
+                xlabel="mean",
+                ylabel="variance",
+                xscale="log",
+                yscale="log",
+            )
+        else:
+            axs[0].set(title=axs0_title, xlabel="tile", ylabel="mean", yscale="log")
+            axs[1].set(
+                title="variances", xlabel="tile", ylabel="variance", yscale="log"
+            )
+            axs[2].set(
+                title="Index of dispersion",
+                xlabel="tile",
+                ylabel="D = Var/mean",
+                yscale="log",
+            )
 
         fig.tight_layout()
         if save:
             location = "plots\\means_and_variances\\"
             if age != "all":
                 location += "split_ages\\"
+            if var_against_mean:
+                location += "var_against_mean\\"
 
             file_name = "{}_mean_var".format(variant)
             if show_strands:
@@ -223,8 +257,6 @@ def plot_all_mean_var(
 
 def plot_len_tiles(show_strands=False, chromosome="all"):
     """Plots length of the tiles."""
-    # for variant in VARIANTS:
-    #     print(variant)
     fig, ax = plt.subplots()
 
     plot_title = "tile lengths"
@@ -235,8 +267,7 @@ def plot_len_tiles(show_strands=False, chromosome="all"):
         plot_title += " {}".format(chromosome)
 
     for strand in ["+", "-"]:
-        for j, chromosome in enumerate(chrs_to_enumerate):
-            print(j)
+        for chromosome in chrs_to_enumerate:
             chr_tile_df = tile_df.loc[
                 (tile_df["chromosome"] == chromosome) & (tile_df["strand"] == strand)
             ]
@@ -251,6 +282,115 @@ def plot_len_tiles(show_strands=False, chromosome="all"):
             ax.plot(xs, lengths, label="lengths", marker=marker, linestyle="None")
     ax.set(title=plot_title, xlabel="tile number", ylabel="length of tile")
     plt.show()
+
+
+def plot_num_samples(show_strands=False, chromosome="all"):
+    """Plots the number of people that survived the downsampling in each tile."""
+    for variant in VARIANTS:
+        print(variant)
+        fig, ax = plt.subplots()
+
+        plot_title = "num samples"
+        if chromosome == "all":
+            chrs_to_enumerate = chromosomes
+        else:
+            chrs_to_enumerate = chromosome
+            plot_title += " {}".format(chromosome)
+
+        for strand in ["+", "-"]:
+            for chromosome in chrs_to_enumerate:
+                chr_tile_df = tile_df.loc[
+                    (tile_df["chromosome"] == chromosome)
+                    & (tile_df["strand"] == strand)
+                ]
+                xs = chr_tile_df.index
+                nums = np.zeros(len(xs))
+                for x, i in zip(range(len(xs)), chr_tile_df.index):
+                    print(x, i)
+                    data_df = tile_data_df(i)
+                    data_df = data_df.loc[data_df["variant"] == variant]
+                    nums[x] = len(data_df.index)
+
+                if show_strands:
+                    marker = "${}$".format(strand)
+                else:
+                    marker = "${}$".format(chromosome)
+
+                ax.plot(
+                    xs, nums, label="number of samples", marker=marker, linestyle="None"
+                )
+        ax.set(
+            title="{} ".format(variant) + plot_title,
+            xlabel="tile number",
+            ylabel="number of samples",
+        )
+        plt.show()
+
+
+def plot_mean_var_against_num(show_strands=True, chromosome="all"):
+    """Plots the mean and variance against the number of people that survived the downsampling in each tile for that tile."""
+    for variant in VARIANTS:
+        print(variant)
+        fig, axs = plt.subplots(1, 2, figsize=(7, 4))
+
+        plot_title = "num samples"
+        if chromosome == "all":
+            chrs_to_enumerate = chromosomes
+        else:
+            chrs_to_enumerate = chromosome
+            plot_title += " {}".format(chromosome)
+
+        for strand in ["+", "-"]:
+            for chromosome in chrs_to_enumerate:
+                chr_tile_df = tile_df.loc[
+                    (tile_df["chromosome"] == chromosome)
+                    & (tile_df["strand"] == strand)
+                ]
+                xs = chr_tile_df.index
+                nums = np.zeros(len(xs))
+                for x, i in zip(range(len(xs)), chr_tile_df.index):
+                    data_df = tile_data_df(i)
+                    data_df = data_df.loc[data_df["variant"] == variant]
+                    nums[x] = len(data_df.index)
+
+                means = np.zeros(len(chr_tile_df.index))
+                variances = np.zeros(len(chr_tile_df.index))
+                for i, index in enumerate(chr_tile_df.index):
+                    print(i)
+                    means[i], variances[i] = mean_var(index, variant)
+
+                if show_strands:
+                    marker = "${}$".format(strand)
+                else:
+                    marker = "${}$".format(chromosome)
+
+                axs[0].plot(
+                    nums,
+                    means,
+                    label="number of samples",
+                    marker=marker,
+                    linestyle="None",
+                )
+                axs[1].plot(
+                    nums,
+                    variances,
+                    label="number of samples",
+                    marker=marker,
+                    linestyle="None",
+                )
+        axs[0].set(
+            title="{} ".format(variant) + plot_title,
+            xlabel="number of samples",
+            ylabel="mean",
+            yscale="log",
+        )
+        axs[1].set(
+            title="{} ".format(variant) + plot_title,
+            xlabel="number of samples",
+            ylabel="variance",
+            yscale="log",
+        )
+        plt.show()
 
 
 def plot_exon_mean_var(exon_number, save=True, trim_and_flip=True):
@@ -479,4 +619,3 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
         print(func(xs))
         print("first unlikely data: {}".format(x))
         plt.show()
-
