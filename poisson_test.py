@@ -125,6 +125,8 @@ def plot_all_mean_var(
     age="all",
     chromosome="all",
     var_against_mean=False,
+    show_exon_numbers=False,
+    yscale="log",
 ):
     """Plots the mean, variance and the index of dispersion for all tiles."""
     for variant in VARIANTS:
@@ -210,6 +212,8 @@ def plot_all_mean_var(
             axs0_title += " group chromosomes"
         if age != "all":
             axs0_title += " age {}".format(age)
+        if chromosome != "all":
+            axs0_title += " {}".format(chromosome)
         if var_against_mean:
             axs0_title += " var against mean"
             ax.set(
@@ -220,15 +224,15 @@ def plot_all_mean_var(
                 yscale="log",
             )
         else:
-            axs[0].set(title=axs0_title, xlabel="tile", ylabel="mean", yscale="log")
+            axs[0].set(title=axs0_title, xlabel="tile", ylabel="mean", yscale=yscale)
             axs[1].set(
-                title="variances", xlabel="tile", ylabel="variance", yscale="log"
+                title="variances", xlabel="tile", ylabel="variance", yscale=yscale
             )
             axs[2].set(
                 title="Index of dispersion",
                 xlabel="tile",
                 ylabel="D = Var/mean",
-                yscale="log",
+                yscale=yscale,
             )
 
         fig.tight_layout()
@@ -248,6 +252,8 @@ def plot_all_mean_var(
                 file_name += "_group_chromosomes"
             if age != "all":
                 file_name += "_age_{}".format(age)
+            if chromosome != "all":
+                file_name += "_{}".format(chromosome)
             fig.savefig(location + file_name + ".png")
             fig.savefig(location + file_name + ".svg", dpi=1200)
         else:

@@ -95,7 +95,39 @@ def sort_caroline_tiles():
         by="chromosome", kind="mergesort", key=sorter, ignore_index=True,
     )  # use mergesort for stability
 
+    def assign_exon_number_to_tile(df_row):
+        """Assigns the exon number to the tiles in tile_df."""
+        for j, exon in exon_df.iterrows():
+            if (
+                df_row["chromosome"] == exon["chromosome"]
+                and df_row["start"] >= exon["start"]
+                and df_row["end"] <= exon["end"]
+            ):
+                return j
+        return -1  # Error value if no matching exon is found
+
+    # assign_exon_number_to_tile = np.vectorize(assign_exon_number_to_tile)
+
+    df["exon"] = df.apply(assign_exon_number_to_tile, axis=1)
     df.to_csv(file_names["Caroline tiles sorted"], sep="\t")
+
+
+def sort_wing_exons():
+    """Orders exon data from Wing."""
+    df = pd.read_csv(
+        file_names["Wing exons"],
+        header=None,
+        names=["chromosome", "start", "end"],
+        sep="\t",
+    )
+    df["chromosome"] = df["chromosome"].str[3:]
+    df = df.sort_values(
+        by="chromosome", kind="mergesort", key=sorter, ignore_index=True,
+    )  # use mergesort for stability
+    df.to_csv(file_names["Wing exons sorted"], sep="\t")
+
+
+sort_wing_exons()
 
 
 def separating_tiles(tile_numbers):
@@ -296,21 +328,17 @@ def refresh_data(redownsample=False, just_trim_and_flip=False):
 
 
 # Dataframe of exons
-exon_df = pd.read_csv(
-    file_names["Wing exons"],
-    header=None,
-    names=["chromosome", "start", "end"],
-    sep="\t",
-)
+exon_df = pd.read_csv(file_names["Wing exons sorted"], sep="\t", index_col=0,)
 
 # DataFrame of tile information
-tile_df = pd.read_csv(file_names["Caroline tiles sorted"], index_col=0)
+tile_df = pd.read_csv(file_names["Caroline tiles sorted"], sep="\t", index_col=0)
 
 exon_tiles_map = {}
 for i, exon in exon_df.iterrows():
     exon_tiles_map[i] = tile_df.loc[
         (tile_df["start"] >= exon["start"]) & (tile_df["end"] <= exon["end"])
     ]
+
 
 chromosome_tiles_map = {}
 chromosome_exon_map = {}

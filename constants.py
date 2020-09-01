@@ -58,6 +58,7 @@ file_names = {
     "data": data_location + main_data_file,
     "downsampled data": data_location + "\\downsampled_data.txt",
     "Wing exons": data_location + "\\Wing_exons.bed",
+    "Wing exons sorted": data_location + "\\Wing_exons_sorted.txt",
     "Caroline tiles": data_location + "\\Caroline_tiles.bed",
     "Caroline tiles sorted": data_location + "\\Caroline_tiles_sorted.txt",
     "tile": data_location + "\\tiles\\tile_{}.csv",
