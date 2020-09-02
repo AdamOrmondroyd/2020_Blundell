@@ -127,9 +127,6 @@ def sort_wing_exons():
     df.to_csv(file_names["Wing exons sorted"], sep="\t")
 
 
-sort_wing_exons()
-
-
 def separating_tiles(tile_numbers):
     """
     Separates the tiles in full_data.txt by the tiles in Caroline's file.
