@@ -141,7 +141,7 @@ def plot_all_mean_var(
         else:
             chrs_to_enumerate = chromosome
 
-        for strand, color in ["+", "-"], ["blue", "orange"]:
+        for strand, color in zip(["+", "-"], ["blue", "orange"]):
             for j, chromosome in enumerate(chrs_to_enumerate):
                 print(j)
                 chr_tile_df = tile_df.loc[
@@ -175,7 +175,8 @@ def plot_all_mean_var(
                                 label="variances against means",
                                 marker=marker,
                                 linestyle="None",
-                                **marker_style
+                                color=color,
+                                **marker_style,
                             )
                         else:
                             axs[0].plot(
@@ -184,7 +185,8 @@ def plot_all_mean_var(
                                 label="means",
                                 marker=marker,
                                 linestyle="None",
-                                **marker_style
+                                color=color,
+                                **marker_style,
                             )
 
                             axs[1].plot(
@@ -193,7 +195,8 @@ def plot_all_mean_var(
                                 label="variances",
                                 marker=marker,
                                 linestyle="None",
-                                **marker_style
+                                color=color,
+                                **marker_style,
                             )
                             if not group_chromosomes:
                                 xs = xs[np.nonzero(means)]
@@ -206,7 +209,8 @@ def plot_all_mean_var(
                                 label="index of dispersion",
                                 marker=marker,
                                 linestyle="None",
-                                **marker_style
+                                color=color,
+                                **marker_style,
                             )
                 else:
                     if group_chromosomes:
@@ -259,6 +263,7 @@ def plot_all_mean_var(
                             label="index of dispersion",
                             marker=marker,
                             linestyle="None",
+                            color=color,
                         )
         if var_against_mean:
             axs0_title = "{} var against mean".format(variant)
@@ -431,18 +436,10 @@ def plot_mean_var_against_num(show_strands=True, chromosome="all"):
                     marker = "${}$".format(chromosome)
 
                 axs[0].plot(
-                    nums,
-                    means,
-                    label="number of samples",
-                    marker=marker,
-                    linestyle="None",
+                    nums, means, label="means", marker=marker, linestyle="None",
                 )
                 axs[1].plot(
-                    nums,
-                    variances,
-                    label="number of samples",
-                    marker=marker,
-                    linestyle="None",
+                    nums, variances, label="variances", marker=marker, linestyle="None",
                 )
         axs[0].set(
             title="{} ".format(variant) + plot_title,
@@ -453,6 +450,68 @@ def plot_mean_var_against_num(show_strands=True, chromosome="all"):
         axs[1].set(
             title="{} ".format(variant) + plot_title,
             xlabel="number of samples",
+            ylabel="variance",
+            yscale="log",
+        )
+        plt.show()
+
+
+def plot_mean_var_against_consensus(show_strands=True, chromosome="all"):
+    """Plots the mean and variance against the mean total number of consensus molecules per position for that tile."""
+    for variant in VARIANTS:
+        print(variant)
+        fig, axs = plt.subplots(1, 2, figsize=(7, 4))
+
+        plot_title = "num samples"
+        if chromosome == "all":
+            chrs_to_enumerate = chromosomes
+        else:
+            chrs_to_enumerate = chromosome
+            plot_title += " {}".format(chromosome)
+
+        for strand in ["+", "-"]:
+            for chromosome in chrs_to_enumerate:
+                chr_tile_df = tile_df.loc[
+                    (tile_df["chromosome"] == chromosome)
+                    & (tile_df["strand"] == strand)
+                ]
+                xs = chr_tile_df.index
+                cons = np.zeros(len(xs))
+                for x, i in zip(range(len(xs)), chr_tile_df.index):
+                    data_df = tile_data_df(i, group_by="position")
+                    print(data_df)
+                    if not data_df.empty:
+                        data_df = data_df.loc[data_df["variant"] == variant]
+                        cons[x] = np.mean(data_df["num consensus molecules"])
+                    else:
+                        cons[x] = 0
+
+                means = np.zeros(len(chr_tile_df.index))
+                variances = np.zeros(len(chr_tile_df.index))
+                for i, index in enumerate(chr_tile_df.index):
+                    print(i)
+                    means[i], variances[i] = mean_var(index, variant)
+
+                if show_strands:
+                    marker = "${}$".format(strand)
+                else:
+                    marker = "${}$".format(chromosome)
+
+                axs[0].plot(
+                    cons, means, label="means", marker=marker, linestyle="None",
+                )
+                axs[1].plot(
+                    cons, variances, label="variances", marker=marker, linestyle="None",
+                )
+        axs[0].set(
+            title="{} ".format(variant) + plot_title,
+            xlabel="mean number of consensus molecules per position",
+            ylabel="mean",
+            yscale="log",
+        )
+        axs[1].set(
+            title="{} ".format(variant) + plot_title,
+            xlabel="mean number of consensus molecules per position",
             ylabel="variance",
             yscale="log",
         )
