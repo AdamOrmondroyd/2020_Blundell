@@ -518,6 +518,62 @@ def plot_mean_var_against_consensus(show_strands=True, chromosome="all"):
         plt.show()
 
 
+def plot_mean_var_against_num_tiles_in_exon(show_strands=True, chromosome="all"):
+    """Plots the mean and variance against the number of tiles in the exon that tile is from."""
+    for variant in VARIANTS:
+        print(variant)
+        fig, axs = plt.subplots(1, 2, figsize=(7, 4))
+
+        plot_title = "num samples"
+        if chromosome == "all":
+            chrs_to_enumerate = chromosomes
+        else:
+            chrs_to_enumerate = chromosome
+            plot_title += " {}".format(chromosome)
+
+        for strand in ["+", "-"]:
+            for chromosome in chrs_to_enumerate:
+                chr_tile_df = tile_df.loc[
+                    (tile_df["chromosome"] == chromosome)
+                    & (tile_df["strand"] == strand)
+                ]
+                xs = chr_tile_df.index
+                ys = np.zeros(len(xs))
+                for x, i in zip(range(len(xs)), chr_tile_df.index):
+                    ys[x] = len(exon_tiles_map[chr_tile_df.at[i, "exon"]].index)
+
+                means = np.zeros(len(chr_tile_df.index))
+                variances = np.zeros(len(chr_tile_df.index))
+                for i, index in enumerate(chr_tile_df.index):
+                    print(i)
+                    means[i], variances[i] = mean_var(index, variant)
+
+                if show_strands:
+                    marker = "${}$".format(strand)
+                else:
+                    marker = "${}$".format(chromosome)
+
+                axs[0].plot(
+                    ys, means, label="means", marker=marker, linestyle="None",
+                )
+                axs[1].plot(
+                    ys, variances, label="variances", marker=marker, linestyle="None",
+                )
+        axs[0].set(
+            title="{} ".format(variant) + plot_title,
+            xlabel="number of tiles in that exon",
+            ylabel="mean",
+            yscale="log",
+        )
+        axs[1].set(
+            title="{} ".format(variant) + plot_title,
+            xlabel="number of tiles in that exon",
+            ylabel="variance",
+            yscale="log",
+        )
+        plt.show()
+
+
 def plot_exon_mean_var(exon_number, save=True, trim_and_flip=True):
     df = exon_tiles_map[exon_number]
     means = np.zeros(len(df.index))
