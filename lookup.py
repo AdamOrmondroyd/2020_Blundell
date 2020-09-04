@@ -229,22 +229,74 @@ def trim_and_flip(exon_number):
 
     flip = np.vectorize(flip)
 
+    def read_genome(tile_number, tile_data_df):
+        """A version of read_genome which just returns the string when given the tile directly."""
+        genome_string = ""
+        df = tile_data_df.drop(columns=["sample ID"])
+        df = df.groupby(["position", "chromosome", "variant"]).agg(
+            aggregation_functions
+        )
+        df = df.reset_index()
+        for i, row in df.iterrows():
+            if i % 3 == 0:
+                genome_string += row["variant"][0]
+        tile_df.at[tile_number, "genome"] = genome_string
+        tile_df.to_csv(file_names["Caroline tiles sorted"], sep="\t")
+        return genome_string
+
+    def context(tile_number, tile_data_df):
+        """Will think of an accurate description later."""
+
+        start = np.min(tile_data_df["position"])
+        end = np.max(tile_data_df["position"])
+
+        genome_string = read_genome(tile_number, tile_data_df)
+
+        for position in pd.unique(tile_data_df["position"]):
+            if position <= start or position >= end:
+                context_string = "?"
+            else:
+                index = position - start
+                context_string = genome_string[index - 1 : index + 2]
+            tile_data_df.loc[
+                tile_data_df.position == position, "genome"
+            ] = context_string
+        return tile_data_df
+
     tiles = exon_tiles_map[exon_number]
     next_df = tile_data_df(tiles.index[0], trim_and_flip=False)
     if len(tiles.index) >= 2:
         for i in tiles.index[:-1]:
             df = next_df
             next_df = tile_data_df(i + 1, trim_and_flip=False)
+
             cond = ~df["position"].isin(next_df["position"])
             next_cond = ~next_df["position"].isin(df["position"])
             df = df.loc[cond, :]
             next_df = next_df.loc[next_cond, :]
+
             if tile_df.at[i, "strand"] == "-" and len(df.index) != 0:
                 df["variant"] = flip(df["variant"])
+
             df = df.loc[df["downsample"] <= downsample_limit]
+
+            if not df.empty:
+                df = context(i, df)
+
             df.to_csv(file_names["tile t&f"].format(i))
-    next_df = next_df.loc[next_df["downsample"] <= downsample_limit]
-    next_df.to_csv(file_names["tile t&f"].format(tiles.index[-1]))
+
+    if len(tiles.index) > 0:
+        i = tiles.index[-1]
+
+        if not next_df.empty:
+            if tile_df.at[i, "strand"] == "-" and len(next_df.index) != 0:
+                next_df["variant"] = flip(next_df["variant"])
+
+            next_df = next_df.loc[next_df["downsample"] <= downsample_limit]
+
+            next_df = context(i, next_df)
+
+        next_df.to_csv(file_names["tile t&f"].format(tiles.index[-1]))
 
 
 ### Wrappers ###
@@ -300,7 +352,7 @@ def group_strands_wrapper():
 def trim_and_flip_wrapper():
     for i in exon_df.index:
         trim_and_flip(i)
-        print("Gene {}".format(i))
+        print("Exon {}".format(i))
 
 
 def refresh_data(redownsample=False, just_trim_and_flip=False):
@@ -380,13 +432,13 @@ def read_genome():
     tile_genomes = np.empty(len(tile_df.index), dtype=object)
     for j in tile_df.index:
         tile_genomes[j] = ""
-        df = tile_data_df(j, group_by="position")
+        df = tile_data_df(j, group_by="position", trim_and_flip=True)
         for i, row in df.iterrows():
             if i % 3 == 0:
                 tile_genomes[j] += row["variant"][0]
         print(tile_genomes[j])
     tile_df["genome"] = tile_genomes
-    tile_df.to_csv(file_names["Caroline tiles sorted"])
+    tile_df.to_csv(file_names["Caroline tiles sorted"], sep="\t")
 
 
 def variants_per_position(threshold=1000):
