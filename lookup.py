@@ -259,7 +259,7 @@ def trim_and_flip(exon_number):
                 index = position - start
                 context_string = genome_string[index - 1 : index + 2]
             tile_data_df.loc[
-                tile_data_df.position == position, "genome"
+                tile_data_df.position == position, "context"
             ] = context_string
         return tile_data_df
 
