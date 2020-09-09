@@ -258,6 +258,10 @@ def trim_and_flip(exon_number):
             else:
                 index = position - start
                 context_string = genome_string[index - 1 : index + 2]
+                if tile_df.at[tile_number, "strand"] == "-":
+                    context_string = context_string[
+                        ::-1
+                    ]  # context goes other way on -ve strand
             tile_data_df.loc[
                 tile_data_df.position == position, "context"
             ] = context_string

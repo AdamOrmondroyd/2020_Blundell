@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from constants import row_age_map, CONTEXTS
+from constants import row_age_map, variant_contexts_map
 from lookup import (
     chromosomes,
     chromosome_tiles_map,
@@ -132,15 +132,16 @@ def plot_all_mean_var(
     context=False,
 ):
     """Plots the mean, variance and the index of dispersion for all tiles."""
-    if context:
-        contexts_to_iterate = CONTEXTS
-    else:
-        contexts_to_iterate = ["no context"]
+    for variant in VARIANTS:
+        print(variant)
+        if context:
+            contexts_to_iterate = variant_contexts_map[variant]
+        else:
+            contexts_to_iterate = ["no context"]
 
-    for context_string in contexts_to_iterate:
+        for context_string in contexts_to_iterate:
+            print(context_string)
 
-        for variant in VARIANTS:
-            print(variant)
             if var_against_mean:
                 fig, ax = plt.subplots()
             else:
@@ -153,7 +154,7 @@ def plot_all_mean_var(
 
             for strand, color in zip(["+", "-"], ["blue", "orange"]):
                 for j, chromosome in enumerate(chrs_to_enumerate):
-                    print(j)
+                    # print(j)
                     chr_tile_df = tile_df.loc[
                         (tile_df["chromosome"] == chromosome)
                         & (tile_df["strand"] == strand)
@@ -171,7 +172,7 @@ def plot_all_mean_var(
                             means = np.zeros(len(chr_exon_tile_df.index))
                             variances = np.zeros(len(chr_exon_tile_df.index))
                             for i, index in enumerate(chr_exon_tile_df.index):
-                                print(i)
+                                # print(i)
                                 means[i], variances[i] = mean_var(
                                     index, variant, trim_and_flip, age, context_string
                                 )
@@ -824,3 +825,252 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
         print(func(xs))
         print("first unlikely data: {}".format(x))
         plt.show()
+
+
+def plot_hist_mean_by_tile(
+    save=True,
+    trim_and_flip=True,
+    age="all",
+    chromosome="all",
+    yscale="log",
+    context=False,
+):
+    """Plots histogram of the means averaged over each tile."""
+    if yscale == "log":
+        log = True
+    else:
+        log = False
+    if context:
+        contexts_to_iterate = CONTEXTS
+    else:
+        contexts_to_iterate = ["no context"]
+
+    for context_string in contexts_to_iterate:
+
+        for variant in VARIANTS:
+            print(variant)
+
+            fig, axs = plt.subplots(2, figsize=(8, 8))
+
+            if chromosome == "all":
+                chrs_to_use = chromosomes
+            else:
+                chrs_to_use = [chromosome]
+
+            for strand in ["+", "-"]:
+
+                strand_tile_df = tile_df.loc[
+                    (tile_df["strand"] == strand)
+                    & (tile_df["chromosome"].isin(chrs_to_use))
+                ]
+
+                means = np.zeros(len(strand_tile_df.index))
+                variances = np.zeros(len(strand_tile_df.index))
+                for i, index in enumerate(strand_tile_df.index):
+                    means[i], variances[i] = mean_var(
+                        index, variant, trim_and_flip, age
+                    )
+
+                if strand == "+":
+                    pos_means = means
+                    pos_vars = variances
+                    pos_max_mean = np.max(pos_means)
+                    pos_max_var = np.max(pos_vars)
+                else:
+                    neg_means = means
+                    neg_vars = variances
+                    neg_max_mean = np.max(neg_means)
+                    neg_max_var = np.max(neg_vars)
+
+                    max_mean = np.percentile([pos_max_mean, neg_max_mean], 99)
+                    max_var = np.percentile([pos_max_var, neg_max_var], 99)
+
+            n_bins = 100
+
+            mean_bins = np.linspace(0, max_mean * (n_bins + 1) / n_bins, n_bins + 1)
+            var_bins = np.linspace(0, max_var * (n_bins + 1) / n_bins, n_bins + 1)
+
+            axs[0].hist(
+                [pos_means, neg_means],
+                bins=mean_bins,
+                stacked=True,
+                log=log,
+                color=["blue", "orange"],
+                label="+ means",
+                alpha=0.5,
+            )
+
+            axs[1].hist(
+                [pos_vars, neg_vars],
+                bins=var_bins,
+                stacked=True,
+                log=log,
+                color=["blue", "orange"],
+                label="+ variances",
+                alpha=0.5,
+            )
+
+            axs0_title = "{} means".format(variant)
+            if context:
+                axs0_title += " {}".format(context_string)
+            if trim_and_flip:
+                axs0_title += " t&f"
+            if age != "all":
+                axs0_title += " age {}".format(age)
+            if chromosome != "all":
+                axs0_title += " {}".format(chromosome)
+
+            axs[0].set(title=axs0_title, xlabel="mean", ylabel="frequency")
+            axs[1].set(title="variances", xlabel="variance", ylabel="frequency")
+
+            fig.tight_layout()
+            if save:
+                location = "plots\\means_and_variances\\histograms\\"
+
+                file_name = "{}_mean_var_tile_histogram".format(variant)
+                if context:
+                    file_name += "_{}".format(context_string)
+                if trim_and_flip:
+                    file_name += "_t&f"
+                if age != "all":
+                    file_name += "_age_{}".format(age)
+                if chromosome != "all":
+                    file_name += "_{}".format(chromosome)
+                fig.savefig(location + file_name + ".png", dpi=600)
+                fig.savefig(location + file_name + ".svg", dpi=1200)
+            else:
+                plt.show()
+            plt.close("all")
+
+
+def plot_hist_mean_by_position(
+    save=True,
+    trim_and_flip=True,
+    age="all",
+    chromosome="all",
+    yscale="log",
+    context=False,
+):
+    """Plots histogram of the means, averaged over each tile."""
+    if yscale == "log":
+        log = True
+    else:
+        log = False
+    if context:
+        contexts_to_iterate = CONTEXTS
+    else:
+        contexts_to_iterate = ["no context"]
+
+    for context_string in contexts_to_iterate:
+
+        for variant in VARIANTS:
+            print(variant)
+
+            fig, axs = plt.subplots(2, figsize=(8, 8))
+
+            if chromosome == "all":
+                chrs_to_use = chromosomes
+            else:
+                chrs_to_use = [chromosome]
+
+            for strand in ["+", "-"]:
+
+                strand_tile_df = tile_df.loc[
+                    (tile_df["strand"] == strand)
+                    & (tile_df["chromosome"].isin(chrs_to_use))
+                ]
+
+                means = []
+                variances = []
+                for tile_number in strand_tile_df.index:
+                    data_df = tile_data_df(tile_number)
+                    data_df = data_df.loc[data_df["variant"] == variant]
+                    positions = data_df["position"].unique()
+                    tile_means = np.zeros(len(positions))
+                    tile_vars = np.zeros(len(positions))
+                    for i, position in enumerate(positions):
+                        df = data_df.loc[data_df["position"] == position]
+                        tile_means[i] = np.mean(df["downsample"])
+                        tile_vars[i] = np.var(df["downsample"])
+                    means.append(tile_means)
+                    variances.append(tile_vars)
+                means = np.hstack(means)
+                print(means)
+                variances = np.hstack(variances)
+
+                for i, index in enumerate(strand_tile_df.index):
+                    means[i], variances[i] = mean_var(
+                        index, variant, trim_and_flip, age
+                    )
+
+                if strand == "+":
+                    pos_means = means
+                    pos_vars = variances
+                    pos_max_mean = np.max(pos_means)
+                    pos_max_var = np.max(pos_vars)
+                else:
+                    neg_means = means
+                    neg_vars = variances
+                    neg_max_mean = np.max(neg_means)
+                    neg_max_var = np.max(neg_vars)
+
+                    max_mean = np.percentile([pos_max_mean, neg_max_mean], 99)
+                    max_var = np.percentile([pos_max_var, neg_max_var], 99)
+
+            n_bins = 100
+
+            mean_bins = np.linspace(0, max_mean * (n_bins + 1) / n_bins, n_bins + 1)
+            var_bins = np.linspace(0, max_var * (n_bins + 1) / n_bins, n_bins + 1)
+
+            axs[0].hist(
+                [pos_means, neg_means],
+                bins=mean_bins,
+                stacked=True,
+                log=log,
+                color=["blue", "orange"],
+                label="+ means",
+                alpha=0.5,
+            )
+
+            axs[1].hist(
+                [pos_vars, neg_vars],
+                bins=var_bins,
+                stacked=True,
+                log=log,
+                color=["blue", "orange"],
+                label="+ variances",
+                alpha=0.5,
+            )
+
+            axs0_title = "{} means".format(variant)
+            if context:
+                axs0_title += " {}".format(context_string)
+            if trim_and_flip:
+                axs0_title += " t&f"
+            if age != "all":
+                axs0_title += " age {}".format(age)
+            if chromosome != "all":
+                axs0_title += " {}".format(chromosome)
+
+            axs[0].set(title=axs0_title, xlabel="mean", ylabel="frequency")
+            axs[1].set(title="variances", xlabel="variance", ylabel="frequency")
+
+            fig.tight_layout()
+            if save:
+                location = "plots\\means_and_variances\\histograms\\"
+
+                file_name = "{}_mean_var_position_histogram".format(variant)
+                if context:
+                    file_name += "_{}".format(context_string)
+                if trim_and_flip:
+                    file_name += "_t&f"
+                if age != "all":
+                    file_name += "_age_{}".format(age)
+                if chromosome != "all":
+                    file_name += "_{}".format(chromosome)
+                fig.savefig(location + file_name + ".png", dpi=600)
+                fig.savefig(location + file_name + ".svg", dpi=1200)
+            else:
+                plt.show()
+            plt.close("all")
+
