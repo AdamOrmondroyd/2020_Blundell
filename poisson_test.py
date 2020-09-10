@@ -832,8 +832,10 @@ def plot_hist_mean_by_tile(
     trim_and_flip=True,
     age="all",
     chromosome="all",
+    xscale="log",
     yscale="log",
     context=False,
+    cutoff_percentile=100,
 ):
     """Plots histogram of the means averaged over each tile."""
     if yscale == "log":
@@ -882,13 +884,21 @@ def plot_hist_mean_by_tile(
                     neg_max_mean = np.max(neg_means)
                     neg_max_var = np.max(neg_vars)
 
-                    max_mean = np.percentile([pos_max_mean, neg_max_mean], 99)
-                    max_var = np.percentile([pos_max_var, neg_max_var], 99)
+                    max_mean = np.percentile(
+                        [pos_max_mean, neg_max_mean], cutoff_percentile
+                    )
+                    max_var = np.percentile(
+                        [pos_max_var, neg_max_var], cutoff_percentile
+                    )
 
             n_bins = 100
 
-            mean_bins = np.linspace(0, max_mean * (n_bins + 1) / n_bins, n_bins + 1)
-            var_bins = np.linspace(0, max_var * (n_bins + 1) / n_bins, n_bins + 1)
+            if xscale == "log":
+                mean_bins = np.logspace(-4, 4, n_bins + 1)
+                var_bins = np.logspace(-4, 4, n_bins + 1)
+            else:
+                mean_bins = np.linspace(0, max_mean * (n_bins + 1) / n_bins, n_bins + 1)
+                var_bins = np.linspace(0, max_var * (n_bins + 1) / n_bins, n_bins + 1)
 
             axs[0].hist(
                 [pos_means, neg_means],
@@ -896,7 +906,7 @@ def plot_hist_mean_by_tile(
                 stacked=True,
                 log=log,
                 color=["blue", "orange"],
-                label="+ means",
+                label=["+ means", "- means"],
                 alpha=0.5,
             )
 
@@ -906,7 +916,7 @@ def plot_hist_mean_by_tile(
                 stacked=True,
                 log=log,
                 color=["blue", "orange"],
-                label="+ variances",
+                label=["+ variances", "- variances"],
                 alpha=0.5,
             )
 
@@ -920,12 +930,19 @@ def plot_hist_mean_by_tile(
             if chromosome != "all":
                 axs0_title += " {}".format(chromosome)
 
-            axs[0].set(title=axs0_title, xlabel="mean", ylabel="frequency")
-            axs[1].set(title="variances", xlabel="variance", ylabel="frequency")
+            axs[0].set(
+                title=axs0_title, xlabel="mean", ylabel="frequency", xscale=xscale
+            )
+            axs[1].set(
+                title="variances", xlabel="variance", ylabel="frequency", xscale=xscale
+            )
+            for ax in axs:
+                ax.set_ylim(bottom=10 ** -0.5)
+                ax.legend()
 
             fig.tight_layout()
             if save:
-                location = "plots\\means_and_variances\\histograms\\"
+                location = "plots\\means_and_variances\\histograms_tile\\"
 
                 file_name = "{}_mean_var_tile_histogram".format(variant)
                 if context:
@@ -948,10 +965,12 @@ def plot_hist_mean_by_position(
     trim_and_flip=True,
     age="all",
     chromosome="all",
+    xscale="log",
     yscale="log",
     context=False,
+    cutoff_percentile=100,
 ):
-    """Plots histogram of the means, averaged over each tile."""
+    """Plots histogram of the means for each position."""
     if yscale == "log":
         log = True
     else:
@@ -1014,13 +1033,23 @@ def plot_hist_mean_by_position(
                     neg_max_mean = np.max(neg_means)
                     neg_max_var = np.max(neg_vars)
 
-                    max_mean = np.percentile([pos_max_mean, neg_max_mean], 99)
-                    max_var = np.percentile([pos_max_var, neg_max_var], 99)
+                    max_mean = np.percentile(
+                        [pos_max_mean, neg_max_mean], cutoff_percentile
+                    )
+                    max_var = np.percentile(
+                        [pos_max_var, neg_max_var], cutoff_percentile
+                    )
+                    print(max_mean)
+                    print(max_var)
 
             n_bins = 100
 
-            mean_bins = np.linspace(0, max_mean * (n_bins + 1) / n_bins, n_bins + 1)
-            var_bins = np.linspace(0, max_var * (n_bins + 1) / n_bins, n_bins + 1)
+            if xscale == "log":
+                mean_bins = np.logspace(-4, 4, n_bins + 1)
+                var_bins = np.logspace(-4, 4, n_bins + 1)
+            else:
+                mean_bins = np.linspace(0, max_mean * (n_bins + 1) / n_bins, n_bins + 1)
+                var_bins = np.linspace(0, max_var * (n_bins + 1) / n_bins, n_bins + 1)
 
             axs[0].hist(
                 [pos_means, neg_means],
@@ -1028,7 +1057,7 @@ def plot_hist_mean_by_position(
                 stacked=True,
                 log=log,
                 color=["blue", "orange"],
-                label="+ means",
+                label=["+ means", "- means"],
                 alpha=0.5,
             )
 
@@ -1038,7 +1067,7 @@ def plot_hist_mean_by_position(
                 stacked=True,
                 log=log,
                 color=["blue", "orange"],
-                label="+ variances",
+                label=["+ variances", "- variances"],
                 alpha=0.5,
             )
 
@@ -1052,12 +1081,19 @@ def plot_hist_mean_by_position(
             if chromosome != "all":
                 axs0_title += " {}".format(chromosome)
 
-            axs[0].set(title=axs0_title, xlabel="mean", ylabel="frequency")
-            axs[1].set(title="variances", xlabel="variance", ylabel="frequency")
+            axs[0].set(
+                title=axs0_title, xlabel="mean", ylabel="frequency", xscale=xscale
+            )
+            axs[1].set(
+                title="variances", xlabel="variance", ylabel="frequency", xscale=xscale
+            )
+            for ax in axs:
+                ax.set_ylim(bottom=10 ** -0.5)
+                ax.legend()
 
             fig.tight_layout()
             if save:
-                location = "plots\\means_and_variances\\histograms\\"
+                location = "plots\\means_and_variances\\histograms_position\\"
 
                 file_name = "{}_mean_var_position_histogram".format(variant)
                 if context:
@@ -1073,4 +1109,3 @@ def plot_hist_mean_by_position(
             else:
                 plt.show()
             plt.close("all")
-
