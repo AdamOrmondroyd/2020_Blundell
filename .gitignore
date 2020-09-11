@@ -4,4 +4,5 @@ literature/
 paperwork/
 plots/
 __pycache__/
+spam.csv
 testing.py
