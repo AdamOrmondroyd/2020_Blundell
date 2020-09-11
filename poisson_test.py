@@ -836,6 +836,7 @@ def plot_hist_mean_by_tile(
     yscale="log",
     context=False,
     cutoff_percentile=100,
+    show_zeros=True,
 ):
     """Plots histogram of the means averaged over each tile."""
     if yscale == "log":
@@ -899,6 +900,20 @@ def plot_hist_mean_by_tile(
             else:
                 mean_bins = np.linspace(0, max_mean * (n_bins + 1) / n_bins, n_bins + 1)
                 var_bins = np.linspace(0, max_var * (n_bins + 1) / n_bins, n_bins + 1)
+
+            if show_zeros:
+
+                def f(x):
+                    """Turns 0 to 1e-4."""
+                    if x == 0:
+                        return 1e-4
+                    return x
+
+                f = np.vectorize(f)
+                pos_means = f(pos_means)
+                neg_means = f(neg_means)
+                pos_vars = f(pos_vars)
+                neg_vars = f(neg_vars)
 
             axs[0].hist(
                 [pos_means, neg_means],
@@ -969,6 +984,7 @@ def plot_hist_mean_by_position(
     yscale="log",
     context=False,
     cutoff_percentile=100,
+    show_zeros=True,
 ):
     """Plots histogram of the means for each position."""
     if yscale == "log":
@@ -1050,6 +1066,20 @@ def plot_hist_mean_by_position(
             else:
                 mean_bins = np.linspace(0, max_mean * (n_bins + 1) / n_bins, n_bins + 1)
                 var_bins = np.linspace(0, max_var * (n_bins + 1) / n_bins, n_bins + 1)
+
+            if show_zeros:
+
+                def f(x):
+                    """Turns 0 to 1e-4."""
+                    if x == 0:
+                        return 10e-4
+                    return x
+
+                f = np.vectorize(f)
+                pos_means = f(pos_means)
+                neg_means = f(neg_means)
+                pos_vars = f(pos_vars)
+                neg_vars = f(neg_vars)
 
             axs[0].hist(
                 [pos_means, neg_means],
