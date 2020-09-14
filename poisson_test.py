@@ -853,7 +853,7 @@ def plot_hist_mean_by_tile(
         for variant in VARIANTS:
             print(variant)
 
-            fig, axs = plt.subplots(2, figsize=(8, 8))
+            fig, axs = plt.subplots(3, figsize=(8, 8))
 
             if chromosome == "all":
                 chrs_to_use = chromosomes
@@ -892,6 +892,15 @@ def plot_hist_mean_by_tile(
                         [pos_max_var, neg_max_var], cutoff_percentile
                     )
 
+            # throw away all elements for mean=0 so I can calculate D = σ²/μ
+            pos_non_zero_means = pos_means[pos_means.nonzero()]
+            pos_non_zero_vars = pos_vars[pos_means.nonzero()]
+            pos_Ds = pos_non_zero_vars / pos_non_zero_means
+
+            neg_non_zero_means = neg_means[neg_means.nonzero()]
+            neg_non_zero_vars = neg_vars[neg_means.nonzero()]
+            neg_Ds = neg_non_zero_vars / neg_non_zero_means
+
             n_bins = 100
 
             if xscale == "log":
@@ -922,7 +931,6 @@ def plot_hist_mean_by_tile(
                 log=log,
                 color=["blue", "orange"],
                 label=["+ means", "- means"],
-                alpha=0.5,
             )
 
             axs[1].hist(
@@ -932,7 +940,14 @@ def plot_hist_mean_by_tile(
                 log=log,
                 color=["blue", "orange"],
                 label=["+ variances", "- variances"],
-                alpha=0.5,
+            )
+            axs[2].hist(
+                [pos_Ds, neg_Ds],
+                bins=int(np.amax(np.append(pos_Ds, neg_Ds))),
+                stacked=True,
+                log=log,
+                color=["blue", "orange"],
+                label=["+ Ds", "- Ds"],
             )
 
             axs0_title = "{} means".format(variant)
@@ -946,10 +961,16 @@ def plot_hist_mean_by_tile(
                 axs0_title += " {}".format(chromosome)
 
             axs[0].set(
-                title=axs0_title, xlabel="mean", ylabel="frequency", xscale=xscale
+                title=axs0_title, xlabel=r"$\mu$", ylabel="frequency", xscale=xscale
             )
             axs[1].set(
-                title="variances", xlabel="variance", ylabel="frequency", xscale=xscale
+                title="variances",
+                xlabel=r"$\sigma^2$",
+                ylabel="frequency",
+                xscale=xscale,
+            )
+            axs[2].set(
+                title=r"$D = \frac{\sigma^2}{\mu}$", xlabel=r"$D$", ylabel="frequency",
             )
             for ax in axs:
                 ax.set_ylim(bottom=10 ** -0.5)
@@ -1001,7 +1022,7 @@ def plot_hist_mean_by_position(
         for variant in VARIANTS:
             print(variant)
 
-            fig, axs = plt.subplots(2, figsize=(8, 8))
+            fig, axs = plt.subplots(3, figsize=(8, 8))
 
             if chromosome == "all":
                 chrs_to_use = chromosomes
@@ -1030,7 +1051,6 @@ def plot_hist_mean_by_position(
                     means.append(tile_means)
                     variances.append(tile_vars)
                 means = np.hstack(means)
-                print(means)
                 variances = np.hstack(variances)
 
                 for i, index in enumerate(strand_tile_df.index):
@@ -1057,6 +1077,15 @@ def plot_hist_mean_by_position(
                     )
                     print(max_mean)
                     print(max_var)
+
+            # throw away all elements for mean=0 so I can calculate D = σ²/μ
+            pos_non_zero_means = pos_means[pos_means.nonzero()]
+            pos_non_zero_vars = pos_vars[pos_means.nonzero()]
+            pos_Ds = pos_non_zero_vars / pos_non_zero_means
+
+            neg_non_zero_means = neg_means[neg_means.nonzero()]
+            neg_non_zero_vars = neg_vars[neg_means.nonzero()]
+            neg_Ds = neg_non_zero_vars / neg_non_zero_means
 
             n_bins = 100
 
@@ -1088,7 +1117,6 @@ def plot_hist_mean_by_position(
                 log=log,
                 color=["blue", "orange"],
                 label=["+ means", "- means"],
-                alpha=0.5,
             )
 
             axs[1].hist(
@@ -1098,7 +1126,14 @@ def plot_hist_mean_by_position(
                 log=log,
                 color=["blue", "orange"],
                 label=["+ variances", "- variances"],
-                alpha=0.5,
+            )
+            axs[2].hist(
+                [pos_Ds, neg_Ds],
+                bins=int(np.amax(np.append(pos_Ds, neg_Ds))),
+                stacked=True,
+                log=log,
+                color=["blue", "orange"],
+                label=["+ Ds", "- Ds"],
             )
 
             axs0_title = "{} means".format(variant)
@@ -1112,10 +1147,16 @@ def plot_hist_mean_by_position(
                 axs0_title += " {}".format(chromosome)
 
             axs[0].set(
-                title=axs0_title, xlabel="mean", ylabel="frequency", xscale=xscale
+                title=axs0_title, xlabel=r"$\mu$", ylabel="frequency", xscale=xscale
             )
             axs[1].set(
-                title="variances", xlabel="variance", ylabel="frequency", xscale=xscale
+                title="variances",
+                xlabel=r"$\sigma^2$",
+                ylabel="frequency",
+                xscale=xscale,
+            )
+            axs[2].set(
+                title=r"$D = \frac{\sigma^2}{\mu}$", xlabel=r"$D$", ylabel="frequency",
             )
             for ax in axs:
                 ax.set_ylim(bottom=10 ** -0.5)
