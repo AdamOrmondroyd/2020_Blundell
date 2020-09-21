@@ -198,7 +198,13 @@ def group_by_position(tile_number, trim_and_flip=True):
     """Groups the specified tile by position."""
     df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
     df = df.drop(columns=["sample ID"])
+    temp_numbers_df = (
+        df.groupby(["position", "chromosome", "variant"]).size().reset_index()
+    )
     df = df.groupby(["position", "chromosome", "variant"]).agg(aggregation_functions)
+    df["num rows"] = np.array(
+        temp_numbers_df[temp_numbers_df.columns[-1]].astype(float)
+    )
     if trim_and_flip:
         df.to_csv(file_names["tile group positions t&f"].format(tile_number))
     else:
@@ -497,22 +503,30 @@ def look_for_mean(lower, upper, chromosome="all"):
 
             for tile_number in chr_tile_df.index:
 
-                chr_tile_data_df = tile_data_df(tile_number)
-                chr_tile_data_df = chr_tile_data_df.loc[
-                    (chr_tile_data_df["chromosome"] == chromosome)
-                    & (chr_tile_data_df["variant"] == variant)
-                ]
-
-                for position in chr_tile_data_df["position"].unique():
-                    position_df = chr_tile_data_df.loc[
-                        chr_tile_data_df["position"] == position
+                chr_tile_data_df = tile_data_df(tile_number, group_by="position")
+                if not chr_tile_data_df.empty:
+                    chr_tile_data_df = chr_tile_data_df.loc[
+                        chr_tile_data_df["variant"] == variant
                     ]
-                    if not position_df.empty:
-                        mean = np.mean(position_df["downsample"])
-                        if mean >= lower and mean <= upper:
-                            print(
-                                "chromosome {}, position {}, variant {}".format(
-                                    chromosome, position, variant
+                    chr_tile_data_df["mean"] = (
+                        chr_tile_data_df["downsample"] / chr_tile_data_df["num rows"]
+                    )
+
+                    for position in chr_tile_data_df["position"].unique():
+                        position_df = chr_tile_data_df.loc[
+                            chr_tile_data_df["position"] == position
+                        ]  # should only be one row
+                        if len(position_df.index) > 1:
+                            raise Exception("position_df was more than one thing long!")
+                        if not position_df.empty:
+                            mean = position_df["downsample"] / position_df["num rows"]
+
+                            # should be 1x1 so don't need any indices lol
+                            mean = mean.iat[0]
+                            if mean >= lower and mean <= upper:
+                                print(
+                                    "chromosome {}, position {}, variant {}".format(
+                                        chromosome, position, variant
+                                    )
                                 )
-                            )
 
