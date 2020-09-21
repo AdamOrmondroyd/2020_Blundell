@@ -349,6 +349,66 @@ def plot_all_mean_var(
             plt.close("all")
 
 
+def plot_all_mean_var_tile(
+    save=True,
+    trim_and_flip=True,
+    age="all",
+    chromosome="all",
+    xscale="log",
+    yscale="log",
+    context=False,
+):
+    """Plots mean against variance for all tiles"""
+    if context:
+        contexts_to_iterate = CONTEXTS
+    else:
+        contexts_to_iterate = ["no context"]
+
+    for context_string in contexts_to_iterate:
+        for variant in VARIANTS:
+            print(variant)
+
+            fig, ax = plt.subplots()
+
+            if chromosome == "all":
+                chrs_to_use = chromosomes
+            else:
+                chrs_to_use = [chromosome]
+
+            for strand, color in zip(["+", "-"], ["blue", "orange"]):
+                strand_tile_df = tile_df.loc[
+                    (tile_df["strand"] == strand)
+                    & (tile_df["chromosome"].isin(chrs_to_use))
+                ]
+
+                means = []
+                variances = []
+                for tile_number in strand_tile_df.index:
+                    data_df = tile_data_df(tile_number)
+                    data_df = data_df.loc[data_df["variant"] == variant]
+                    positions = data_df["position"].unique()
+                    tile_means = np.zeros(len(positions))
+                    tile_vars = np.zeros(len(positions))
+                    for i, position in enumerate(positions):
+                        df = data_df.loc[data_df["position"] == position]
+                        tile_means[i] = np.mean(df["downsample"])
+                        tile_vars[i] = np.var(df["downsample"])
+                    means.append(tile_means)
+                    variances.append(tile_vars)
+                means = np.hstack(means)
+                variances = np.hstack(variances)
+
+                ax.plot(
+                    means,
+                    variances,
+                    color=color,
+                    marker="${}$".format(strand),
+                    linestyle="None",
+                )
+                ax.set(xlabel="mean", ylabel="variance", xscale="log", yscale="log")
+            plt.show()
+
+
 def plot_len_tiles(show_strands=False, chromosome="all"):
     """Plots length of the tiles."""
     fig, ax = plt.subplots()
@@ -970,7 +1030,10 @@ def plot_hist_mean_by_tile(
                 xscale=xscale,
             )
             axs[2].set(
-                title=r"$D = \frac{\sigma^2}{\mu}$", xlabel=r"$D$", ylabel="frequency",
+                title=r"$D = \frac{\sigma^2}{\mu}$",
+                xlabel=r"$D$",
+                ylabel="frequency",
+                xscale=xscale,
             )
             for ax in axs:
                 ax.set_ylim(bottom=10 ** -0.5)
@@ -1052,11 +1115,6 @@ def plot_hist_mean_by_position(
                     variances.append(tile_vars)
                 means = np.hstack(means)
                 variances = np.hstack(variances)
-
-                for i, index in enumerate(strand_tile_df.index):
-                    means[i], variances[i] = mean_var(
-                        index, variant, trim_and_flip, age
-                    )
 
                 if strand == "+":
                     pos_means = means
@@ -1156,7 +1214,10 @@ def plot_hist_mean_by_position(
                 xscale=xscale,
             )
             axs[2].set(
-                title=r"$D = \frac{\sigma^2}{\mu}$", xlabel=r"$D$", ylabel="frequency",
+                title=r"$D = \frac{\sigma^2}{\mu}$",
+                xlabel=r"$D$",
+                ylabel="frequency",
+                xscale=xscale,
             )
             for ax in axs:
                 ax.set_ylim(bottom=10 ** -0.5)

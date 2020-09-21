@@ -14,6 +14,7 @@ from constants import (
     LANES,
     PEOPLE,
     sorter,
+    VARIANTS,
 )
 
 
@@ -477,4 +478,41 @@ def actual_differences():
             & (df["downsample"] > 0)
         ]
         print(df)
+
+
+def look_for_mean(lower, upper, chromosome="all"):
+    """Looks for all positions with a mean number of variants per person between lower and upper."""
+    if chromosome == "all":
+        chromosomes_to_iterate = chromosomes
+    else:
+        chromosomes_to_iterate = [chromosome]
+
+    for variant in VARIANTS:
+        # print(variant)
+
+        for chromosome in chromosomes_to_iterate:
+            # print(chromosome)
+
+            chr_tile_df = tile_df.loc[tile_df["chromosome"] == chromosome]
+
+            for tile_number in chr_tile_df.index:
+
+                chr_tile_data_df = tile_data_df(tile_number)
+                chr_tile_data_df = chr_tile_data_df.loc[
+                    (chr_tile_data_df["chromosome"] == chromosome)
+                    & (chr_tile_data_df["variant"] == variant)
+                ]
+
+                for position in chr_tile_data_df["position"].unique():
+                    position_df = chr_tile_data_df.loc[
+                        chr_tile_data_df["position"] == position
+                    ]
+                    if not position_df.empty:
+                        mean = np.mean(position_df["downsample"])
+                        if mean >= lower and mean <= upper:
+                            print(
+                                "chromosome {}, position {}, variant {}".format(
+                                    chromosome, position, variant
+                                )
+                            )
 
