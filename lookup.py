@@ -496,7 +496,7 @@ def look_for_mean(lower, upper, chromosome="all"):
     df = pd.DataFrame(columns=["chromosome", "tile", "position", "variant", "mean"])
 
     for variant in VARIANTS:
-        # print(variant)
+        print(variant)
 
         for chromosome in chromosomes_to_iterate:
             # print(chromosome)
@@ -525,7 +525,13 @@ def look_for_mean(lower, upper, chromosome="all"):
 
                             # should be 1x1 so don't need any indices lol
                             mean = mean.iat[0]
-                            if mean >= lower and mean <= upper:
+                            num_rows = position_df["num rows"].iat[0]
+                            if (
+                                mean >= lower
+                                and mean <= upper
+                                and num_rows > 30
+                                and np.max(position_df["downsample"] >= 5)
+                            ):
                                 print(
                                     "chromosome {}, tile {}, position {}, variant {}, mean = {}".format(
                                         chromosome, tile_number, position, variant, mean
@@ -534,7 +540,7 @@ def look_for_mean(lower, upper, chromosome="all"):
                                 df = df.append(
                                     {
                                         "chromosome": chromosome,
-                                        "tile": tile_number,
+                                        "tile number": tile_number,
                                         "position": position,
                                         "variant": variant,
                                         "mean": mean,
@@ -543,7 +549,5 @@ def look_for_mean(lower, upper, chromosome="all"):
                                 )
     print(df)
     if not df.empty:
-        df.to_csv(
-            data_location + "\\positions_to_plot\\{}_to_{}.csv".format(lower, upper)
-        )
+        df.to_csv(file_names["found means"] + "\\{}_to_{}.csv".format(lower, upper))
 

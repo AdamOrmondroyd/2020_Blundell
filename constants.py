@@ -313,6 +313,7 @@ file_names = {
     "tile group positions t&f": data_location
     + "\\tiles_by_position_t&f\\tile_{}_group_positions_t&f.csv",
     "juicy tiles": data_location + "\\juicy_tiles.csv",
+    "found means": data_location + "\\positions_to_plot",
 }
 
 
