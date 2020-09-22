@@ -10,6 +10,7 @@ import os
 import gc
 from constants import (
     CHUNKSIZE,
+    data_location,
     file_names,
     LANES,
     PEOPLE,
@@ -492,6 +493,7 @@ def look_for_mean(lower, upper, chromosome="all"):
         chromosomes_to_iterate = chromosomes
     else:
         chromosomes_to_iterate = [chromosome]
+    df = pd.DataFrame(columns=["chromosome", "tile", "position", "variant", "mean"])
 
     for variant in VARIANTS:
         # print(variant)
@@ -525,8 +527,23 @@ def look_for_mean(lower, upper, chromosome="all"):
                             mean = mean.iat[0]
                             if mean >= lower and mean <= upper:
                                 print(
-                                    "chromosome {}, position {}, variant {}".format(
-                                        chromosome, position, variant
+                                    "chromosome {}, tile {}, position {}, variant {}, mean = {}".format(
+                                        chromosome, tile_number, position, variant, mean
                                     )
                                 )
+                                df = df.append(
+                                    {
+                                        "chromosome": chromosome,
+                                        "tile": tile_number,
+                                        "position": position,
+                                        "variant": variant,
+                                        "mean": mean,
+                                    },
+                                    ignore_index=True,
+                                )
+    print(df)
+    if not df.empty:
+        df.to_csv(
+            data_location + "\\positions_to_plot\\{}_to_{}.csv".format(lower, upper)
+        )
 
