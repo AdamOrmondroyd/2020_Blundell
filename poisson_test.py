@@ -875,8 +875,6 @@ def plot_juicy_hist(juicy_tile_number=None, fit=None, bins_to_fit=-1):
 
         ax.set_ylim(bottom, top)  # to avoid axes beung fucked by the Poisson fit
 
-        ax.plot([xs[0], xs[-1]], [1.0, 1.0], label="1/N")
-
         ax.legend()
 
         def func(x):
