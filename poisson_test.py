@@ -818,21 +818,6 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
         )
         xs = np.arange(maximum + 1)
 
-        if fit == "Poisson fix mean" or fit == "all":
-            ys = poisson.pmf(xs, mean) * N
-            ax.plot(
-                xs, ys, marker="+", color="xkcd:piss yellow", label="Poisson fit mean"
-            )
-
-        if fit == "Poisson" or fit == "all":
-
-            def f(x, mean):
-                return poisson.pmf(x, mean) * N
-
-            mean, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
-            ys = f(xs, mean)
-            ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
-
         if fit == "beta-binomial" or fit == "both beta-binomial" or fit == "all":
 
             def b(a):
@@ -867,6 +852,25 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
             ax.plot(
                 xs, f(xs, a, b), marker="+", color="r", label="beta-binomial fixed mean"
             )
+
+        bottom, top = ax.get_ylim()  # to avoid axes being f*cked by the Poisson fit
+
+        if fit == "Poisson fix mean" or fit == "all":
+            ys = poisson.pmf(xs, mean) * N
+            ax.plot(
+                xs, ys, marker="+", color="xkcd:piss yellow", label="Poisson fit mean"
+            )
+
+        if fit == "Poisson" or fit == "all":
+
+            def f(x, mean):
+                return poisson.pmf(x, mean) * N
+
+            mean, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+            ys = f(xs, mean)
+            ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
+
+        ax.set_ylim(bottom, top)  # to avoid axes beung fucked by the Poisson fit
 
         ax.plot([xs[0], xs[-1]], [1.0, 1.0], label="1/N")
 
@@ -1367,7 +1371,7 @@ def plot_hist_D_by_position(
     else:
         log = False
 
-    fig, axs = plt.subplots(4, 3, figsize=(16, 26))
+    fig, axs = plt.subplots(4, 3, figsize=(16, 20))
 
     for variant, ax in zip(VARIANTS, axs.flatten()):
         print(variant)
@@ -1430,35 +1434,18 @@ def plot_hist_D_by_position(
 
         n_bins = 100
 
-        if xscale == "log":
-            mean_bins = np.logspace(-4, 4, n_bins + 1)
-            var_bins = np.logspace(-4, 4, n_bins + 1)
-        else:
-            mean_bins = np.linspace(0, max_mean * (n_bins + 1) / n_bins, n_bins + 1)
-            var_bins = np.linspace(0, max_var * (n_bins + 1) / n_bins, n_bins + 1)
-
-        if show_zeros:
-
-            def f(x):
-                """Turns 0 to 1e-4."""
-                if x == 0:
-                    return 10e-4
-                return x
-
-            f = np.vectorize(f)
-            pos_means = f(pos_means)
-            neg_means = f(neg_means)
-            pos_vars = f(pos_vars)
-            neg_vars = f(neg_vars)
-
-        ax.hist(
+        Ds = np.append(pos_Ds, neg_Ds)
+        bins = np.logspace(np.log10(np.amin(Ds[Ds > 0])), np.log10(np.amax(Ds)), n_bins)
+        print("min D: {}".format(np.amin(Ds)))
+        n, bins, patches = ax.hist(
             [pos_Ds, neg_Ds],
-            bins=int(np.amax(np.append(pos_Ds, neg_Ds))),
+            bins=bins,
             stacked=True,
             log=log,
             color=["blue", "orange"],
             label=["+ Ds", "- Ds"],
         )
+        print(bins)
 
         ax_title = "{} means".format(variant)
         if trim_and_flip:
