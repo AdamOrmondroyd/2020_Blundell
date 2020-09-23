@@ -775,7 +775,7 @@ def plot_chromosome_variant_hist(
             plt.show()
 
 
-def plot_juicy_hist(juicy_tile_number=None, fit=None, bins_to_fit=-1):
+def plot_juicy_hist(save=True, juicy_tile_number=None, fit=None, bins_to_fit=-1):
     """Plots histograms of the juiciest positions and variants."""
 
     for i, juicy_row in juicy_df.iterrows():
@@ -822,6 +822,23 @@ def plot_juicy_hist(juicy_tile_number=None, fit=None, bins_to_fit=-1):
 
         if fit == "beta-binomial" or fit == "both beta-binomial" or fit == "all":
 
+            def f(x, a, b):
+                return betabinom.pmf(x, n, a, b) * N
+
+            (a, b), pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+            fit_mean = betabinom.mean(n, a, b)
+            print("fit mean: {}".format(fit_mean))
+            fit_var = betabinom.var(n, a, b)
+            print("fit variance: {}".format(fit_var))
+
+            ax.plot(xs, f(xs, a, b), marker="+", color="k", label="beta-binomial")
+
+        if (
+            fit == "beta-binomial fix mean"
+            or fit == "both beta-binomial"
+            or fit == "all"
+        ):
+
             def b(a):
                 return a * (n / mean - 1.0)
 
@@ -834,29 +851,22 @@ def plot_juicy_hist(juicy_tile_number=None, fit=None, bins_to_fit=-1):
             fit_var = betabinom.var(n, a, b(a))
             print("fit variance: {}".format(fit_var))
 
-            ax.plot(xs, f(xs, a), marker="+", color="k", label="beta-binomial")
-
-        if (
-            fit == "beta-binomial fix mean"
-            or fit == "both beta-binomial"
-            or fit == "all"
-        ):
-
-            def f(x, a, b):
-                return betabinom.pmf(x, n, a, b) * N
-
-            (a, b), pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
-            fit_mean = betabinom.mean(n, a, b)
-            print("fit mean: {}".format(fit_mean))
-            fit_var = betabinom.var(n, a, b)
-            print("fit variance: {}".format(fit_var))
-
             ax.plot(
-                xs, f(xs, a, b), marker="+", color="r", label="beta-binomial fixed mean"
+                xs, f(xs, a), marker="+", color="r", label="beta-binomial fixed mean"
             )
 
         ax.set(title=plot_title, yscale="log")
         bottom, top = ax.get_ylim()  # to avoid axes being f*cked by the Poisson fit
+
+        if fit == "Poisson" or fit == "all":
+
+            def f(x, λ):
+                return poisson.pmf(x, λ) * N
+
+            λ, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+            print("🐈")
+            ys = f(xs, λ)
+            ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
 
         if fit == "Poisson fix mean" or fit == "all":
             ys = poisson.pmf(xs, mean) * N
@@ -864,31 +874,29 @@ def plot_juicy_hist(juicy_tile_number=None, fit=None, bins_to_fit=-1):
                 xs, ys, marker="+", color="xkcd:piss yellow", label="Poisson fit mean"
             )
 
-        if fit == "Poisson" or fit == "all":
-
-            def f(x, mean):
-                return poisson.pmf(x, mean) * N
-
-            mean, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
-            ys = f(xs, mean)
-            ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
-
         ax.set_ylim(bottom, top)  # to avoid axes beung fucked by the Poisson fit
 
         ax.legend()
 
-        def func(x):
-            return betabinom.pmf(x, n, a, b) * N - 1
+        # def func(x):
+        #     return betabinom.pmf(x, n, a, b) * N - 1
 
-        for x in xs:
-            if func(x) <= 0:
-                x
-                break
+        # for x in xs:
+        #     if func(x) <= 0:
+        #         x
+        #         break
 
-        print(xs)
-        print(func(xs))
-        print("first unlikely data: {}".format(x))
-        plt.show()
+        # print(xs)
+        # print(func(xs))
+        # print("first unlikely data: {}".format(x))
+        if save:
+            location = "plots\\juicy_plots\\"
+            file_name = "juicy_{}".format(i)
+            fig.savefig(location + file_name + ".png", dpi=600)
+            fig.savefig(location + file_name + ".svg", dpi=1200)
+            fig.savefig(location + file_name + ".eps", dpi=1200)
+        else:
+            plt.show()
 
 
 def plot_found_hist(
