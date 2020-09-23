@@ -6,6 +6,7 @@ from lookup import (
     chromosomes,
     chromosome_tiles_map,
     exon_tiles_map,
+    file_names,
     tile_df,
     tile_data_df,
     juicy_df,
@@ -14,6 +15,7 @@ from constants import VARIANTS
 from scipy.stats import betabinom, poisson
 from scipy.optimize import curve_fit, fsolve, newton
 from collections.abc import Iterable
+from random import choice
 
 
 def mean_var(tile_numbers, variant, trim_and_flip=True, age="all", context=None):
@@ -855,7 +857,7 @@ def plot_juicy_hist(save=True, juicy_tile_number=None, fit=None, bins_to_fit=-1)
                 xs, f(xs, a), marker="+", color="r", label="beta-binomial fixed mean"
             )
 
-        ax.set(title=plot_title, yscale="log")
+        ax.set(title=plot_title, xlabel="variants per sample", yscale="log")
         bottom, top = ax.get_ylim()  # to avoid axes being f*cked by the Poisson fit
 
         if fit == "Poisson" or fit == "all":
@@ -864,7 +866,6 @@ def plot_juicy_hist(save=True, juicy_tile_number=None, fit=None, bins_to_fit=-1)
                 return poisson.pmf(x, λ) * N
 
             λ, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
-            print("🐈")
             ys = f(xs, λ)
             ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
 
@@ -874,7 +875,8 @@ def plot_juicy_hist(save=True, juicy_tile_number=None, fit=None, bins_to_fit=-1)
                 xs, ys, marker="+", color="xkcd:piss yellow", label="Poisson fit mean"
             )
 
-        ax.set_ylim(bottom, top)  # to avoid axes beung fucked by the Poisson fit
+        ax.set_ylim(bottom, top)  # to avoid axes being f*cked by the Poisson fit
+        ax.set_xticks(np.arange(bins[-1] + 1))
 
         ax.legend()
 
@@ -899,112 +901,154 @@ def plot_juicy_hist(save=True, juicy_tile_number=None, fit=None, bins_to_fit=-1)
             plt.show()
 
 
-def plot_found_hist(
-    chromosome, tile_number, position, variant, fit=None, bins_to_fit=-1
-):
+def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True):
     """Plots histograms of the positions I've found that I want to plot."""
-
-    # for i, juicy_row in juicy_df.iterrows():
-    #     juicy_data_df = tile_data_df(juicy_row["tile"])
-    #     juicy_data_df = juicy_data_df.loc[
-    #         (juicy_data_df["position"] == juicy_row["position"])
-    #         & (juicy_data_df["variant"] == juicy_row["variant"])
-    #     ]
-
-    df = tile_data_df(tile_number)
-    df = df.loc[(df["position"] == position) & (df["variant"] == variant)]
-    print(df)
-    plot_title = "chr {}, position {}, {}".format(chromosome, position, variant)
-
-    n = 6348
-    N = len(df.index)  # To adjust normalisation of distributions
-    print("N = {}".format(N))
-    mean = np.mean(df["downsample"])
-    print(mean)
-
-    fig, ax = plt.subplots()
-
-    maximum = np.amax(df["downsample"])
-    bins = np.arange(-0.5, maximum + 1.5)
-    hs, hs_bin_edges = np.histogram(df["downsample"], bins)
-
-    ax.hist(
-        df["downsample"],
-        bins=bins[: bins_to_fit + 1],
-        color="green",
-        linestyle="-",
-        edgecolor="k",
+    found_means_df = pd.read_csv(
+        file_names["found means"] + "\\{}_to_{}.csv".format(lower, upper)
     )
-    ax.hist(
-        df["downsample"],
-        bins=bins[bins_to_fit:],
-        color="c",
-        linestyle="-",
-        edgecolor="k",
-    )
-    xs = np.arange(maximum + 1)
+    fig, axs = plt.subplots(4, 3, figsize=(16, 20))
+    for variant, ax in zip(VARIANTS, axs.flatten()):
 
-    if fit == "Poisson fix mean" or fit == "all":
-        ys = poisson.pmf(xs, mean) * N
-        ax.plot(xs, ys, marker="+", color="xkcd:piss yellow", label="Poisson fit mean")
+        # for i, juicy_row in juicy_df.iterrows():
+        #     juicy_data_df = tile_data_df(juicy_row["tile"])
+        #     juicy_data_df = juicy_data_df.loc[
+        #         (juicy_data_df["position"] == juicy_row["position"])
+        #         & (juicy_data_df["variant"] == juicy_row["variant"])
+        #     ]
+        variant_found_means_df = found_means_df.loc[
+            found_means_df["variant"] == variant
+        ]
+        if not variant_found_means_df.empty:
+            found_row = (
+                found_means_df.loc[found_means_df["variant"] == variant]
+                .sample()
+                .iloc[0]
+            )
+            print(found_row)  # for added confusion, this is actually a df
 
-    if fit == "Poisson" or fit == "all":
+            df = tile_data_df(int(found_row["tile number"]))
+            df = df.loc[
+                (df["position"] == int(found_row["position"]))
+                & (df["variant"] == variant)
+            ]
+            print(found_row["chromosome"])
+            plot_title = "chr {}, position {}, {}".format(
+                found_row["chromosome"], int(found_row["position"]), variant
+            )
 
-        def f(x, mean):
-            return poisson.pmf(x, mean) * N
+            n = 6348
+            N = len(df.index)  # To adjust normalisation of distributions
+            print("N = {}".format(N))
+            mean = np.mean(df["downsample"])
+            print(mean)
 
-        mean, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
-        ys = f(xs, mean)
-        ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
+            maximum = np.amax(df["downsample"])
+            bins = np.arange(-0.5, maximum + 1.5)
+            hs, hs_bin_edges = np.histogram(df["downsample"], bins)
+            if bins_to_fit is None:
+                bins_to_fit = len(bins)
 
-    if fit == "beta-binomial" or fit == "both beta-binomial" or fit == "all":
+            ax.hist(
+                df["downsample"],
+                bins=bins[: bins_to_fit + 1],
+                color="green",
+                linestyle="-",
+                edgecolor="k",
+            )
+            ax.hist(
+                df["downsample"],
+                bins=bins[bins_to_fit:],
+                color="c",
+                linestyle="-",
+                edgecolor="k",
+            )
+            xs = np.arange(maximum + 1)
 
-        def b(a):
-            return a * (n / mean - 1.0)
+            if fit == "beta-binomial" or fit == "both beta-binomial" or fit == "all":
 
-        def f(x, a):
-            return betabinom.pmf(x, n, a, b(a)) * N
+                def f(x, a, b):
+                    return betabinom.pmf(x, n, a, b) * N
 
-        a, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
-        fit_mean = betabinom.mean(n, a, b(a))
-        print("fit mean: {}".format(fit_mean))
-        fit_var = betabinom.var(n, a, b(a))
-        print("fit variance: {}".format(fit_var))
+                (a, b), pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+                fit_mean = betabinom.mean(n, a, b)
+                print("fit mean: {}".format(fit_mean))
+                fit_var = betabinom.var(n, a, b)
+                print("fit variance: {}".format(fit_var))
 
-        ax.plot(xs, f(xs, a), marker="+", color="k", label="beta-binomial")
+                ax.plot(xs, f(xs, a, b), marker="+", color="k", label="beta-binomial")
 
-    if fit == "beta-binomial fix mean" or fit == "both beta-binomial" or fit == "all":
+            if (
+                fit == "beta-binomial fix mean"
+                or fit == "both beta-binomial"
+                or fit == "all"
+            ):
 
-        def f(x, a, b):
-            return betabinom.pmf(x, n, a, b) * N
+                def b(a):
+                    return a * (n / mean - 1.0)
 
-        (a, b), pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
-        fit_mean = betabinom.mean(n, a, b)
-        print("fit mean: {}".format(fit_mean))
-        fit_var = betabinom.var(n, a, b)
-        print("fit variance: {}".format(fit_var))
+                def f(x, a):
+                    return betabinom.pmf(x, n, a, b(a)) * N
 
-        ax.plot(
-            xs, f(xs, a, b), marker="+", color="r", label="beta-binomial fixed mean"
-        )
+                a, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+                fit_mean = betabinom.mean(n, a, b(a))
+                print("fit mean: {}".format(fit_mean))
+                fit_var = betabinom.var(n, a, b(a))
+                print("fit variance: {}".format(fit_var))
 
-    ax.plot([xs[0], xs[-1]], [1.0, 1.0], label="1/N")
+                ax.plot(
+                    xs,
+                    f(xs, a),
+                    marker="+",
+                    color="r",
+                    label="beta-binomial fixed mean",
+                )
 
-    ax.set(title=plot_title, yscale="log")
-    ax.legend()
+            ax.set(title=plot_title, xlabel="variants per sample", yscale="log")
+            bottom, top = ax.get_ylim()  # to avoid axes being f*cked by the Poisson fit
 
-    # def func(x):
-    #     return betabinom.pmf(x, n, a, b) * N - 1
+            if fit == "Poisson" or fit == "all":
 
-    # for x in xs:
-    #     if func(x) <= 0:
-    #         x
-    #         break
+                def f(x, λ):
+                    return poisson.pmf(x, λ) * N
 
-    # print(xs)
-    # print(func(xs))
-    # print("first unlikely data: {}".format(x))
-    plt.show()
+                λ, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+                ys = f(xs, λ)
+                ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
+
+            if fit == "Poisson fix mean" or fit == "all":
+                ys = poisson.pmf(xs, mean) * N
+                ax.plot(
+                    xs,
+                    ys,
+                    marker="+",
+                    color="xkcd:piss yellow",
+                    label="Poisson fit mean",
+                )
+
+            ax.set_ylim(bottom, top)  # to avoid axes being f*cked by the Poisson fit
+            ax.set_xticks(np.arange(bins[-1] + 1))
+
+            ax.legend()
+
+        # def func(x):
+        #     return betabinom.pmf(x, n, a, b) * N - 1
+
+        # for x in xs:
+        #     if func(x) <= 0:
+        #         x
+        #         break
+
+        # print(xs)
+        # print(func(xs))
+        # print("first unlikely data: {}".format(x))
+    if save:
+        location = "plots\\found_plots\\"
+        file_name = "found_plots_{}_to_{}".format(lower, upper)
+        fig.savefig(location + file_name + ".png", dpi=600)
+        fig.savefig(location + file_name + ".svg", dpi=1200)
+        fig.savefig(location + file_name + ".eps", dpi=1200)
+    else:
+        plt.show()
 
 
 def plot_hist_mean_by_tile(

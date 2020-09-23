@@ -526,11 +526,7 @@ def look_for_mean(lower, upper, chromosome="all"):
                             # should be 1x1 so don't need any indices lol
                             mean = mean.iat[0]
                             num_rows = position_df["num rows"].iat[0]
-                            if (
-                                mean >= lower
-                                and mean <= upper
-                                and num_rows > 30
-                            ):
+                            if mean >= lower and mean <= upper and num_rows > 30:
                                 print(
                                     "chromosome {}, tile {}, position {}, variant {}, mean = {}".format(
                                         chromosome, tile_number, position, variant, mean
