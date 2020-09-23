@@ -530,7 +530,6 @@ def look_for_mean(lower, upper, chromosome="all"):
                                 mean >= lower
                                 and mean <= upper
                                 and num_rows > 30
-                                and np.max(position_df["downsample"] >= 5)
                             ):
                                 print(
                                     "chromosome {}, tile {}, position {}, variant {}, mean = {}".format(
