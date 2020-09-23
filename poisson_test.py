@@ -775,10 +775,12 @@ def plot_chromosome_variant_hist(
             plt.show()
 
 
-def plot_juicy_hist(fit=None, bins_to_fit=-1):
+def plot_juicy_hist(juicy_tile_number=None, fit=None, bins_to_fit=-1):
     """Plots histograms of the juiciest positions and variants."""
 
     for i, juicy_row in juicy_df.iterrows():
+        if juicy_tile_number is not None and i != juicy_tile_number:
+            continue
         juicy_data_df = tile_data_df(juicy_row["tile"])
         juicy_data_df = juicy_data_df.loc[
             (juicy_data_df["position"] == juicy_row["position"])
@@ -853,6 +855,7 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
                 xs, f(xs, a, b), marker="+", color="r", label="beta-binomial fixed mean"
             )
 
+        ax.set(title=plot_title, yscale="log")
         bottom, top = ax.get_ylim()  # to avoid axes being f*cked by the Poisson fit
 
         if fit == "Poisson fix mean" or fit == "all":
@@ -874,7 +877,6 @@ def plot_juicy_hist(fit=None, bins_to_fit=-1):
 
         ax.plot([xs[0], xs[-1]], [1.0, 1.0], label="1/N")
 
-        ax.set(title=plot_title, yscale="log")
         ax.legend()
 
         def func(x):
