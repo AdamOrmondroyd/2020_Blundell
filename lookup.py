@@ -166,6 +166,7 @@ aggregation_functions = {
     "num variants": "sum",
     "num consensus molecules": "sum",
     "downsample": "sum",
+    # "context": "first",
 }
 
 
@@ -198,14 +199,19 @@ def tile_data_df(tile_number, group_by=None, trim_and_flip=True):
 def group_by_position(tile_number, trim_and_flip=True):
     """Groups the specified tile by position."""
     df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
-    df = df.drop(columns=["sample ID"])
-    temp_numbers_df = (
-        df.groupby(["position", "chromosome", "variant"]).size().reset_index()
-    )
-    df = df.groupby(["position", "chromosome", "variant"]).agg(aggregation_functions)
-    df["num rows"] = np.array(
-        temp_numbers_df[temp_numbers_df.columns[-1]].astype(float)
-    )
+    if not df.empty:
+        df = df.drop(columns=["sample ID"])
+        temp_numbers_df = (
+            df.groupby(["position", "chromosome", "variant", "context"])
+            .size()
+            .reset_index()
+        )
+        df = df.groupby(["position", "chromosome", "variant", "context"]).agg(
+            aggregation_functions
+        )
+        df["num rows"] = np.array(
+            temp_numbers_df[temp_numbers_df.columns[-1]].astype(float)
+        )
     if trim_and_flip:
         df.to_csv(file_names["tile group positions t&f"].format(tile_number))
     else:
@@ -526,10 +532,16 @@ def look_for_mean(lower, upper, chromosome="all"):
                             # should be 1x1 so don't need any indices lol
                             mean = mean.iat[0]
                             num_rows = position_df["num rows"].iat[0]
+                            context = position_df["context"].iat[0]
                             if mean >= lower and mean <= upper and num_rows > 30:
                                 print(
-                                    "chromosome {}, tile {}, position {}, variant {}, mean = {}".format(
-                                        chromosome, tile_number, position, variant, mean
+                                    "chromosome {}, tile {}, position {}, variant {}, context {}, mean = {}".format(
+                                        chromosome,
+                                        tile_number,
+                                        position,
+                                        variant,
+                                        context,
+                                        mean,
                                     )
                                 )
                                 df = df.append(
@@ -538,6 +550,7 @@ def look_for_mean(lower, upper, chromosome="all"):
                                         "tile number": tile_number,
                                         "position": position,
                                         "variant": variant,
+                                        "context": context,
                                         "mean": mean,
                                     },
                                     ignore_index=True,

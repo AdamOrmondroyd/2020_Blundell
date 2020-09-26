@@ -11,7 +11,7 @@ from lookup import (
     tile_data_df,
     juicy_df,
 )
-from constants import VARIANTS
+from constants import data_location, VARIANTS
 from scipy.stats import betabinom, poisson
 from scipy.optimize import curve_fit, fsolve, newton
 from collections.abc import Iterable
@@ -798,7 +798,7 @@ def plot_juicy_hist(save=True, juicy_tile_number=None, fit=None, bins_to_fit=-1)
         N = len(df.index)  # To adjust normalisation of distributions
         print("N = {}".format(N))
         mean = np.mean(df["downsample"])
-        print(mean)
+        print("mean of data: {}".format(mean))
 
         fig, ax = plt.subplots()
 
@@ -857,7 +857,12 @@ def plot_juicy_hist(save=True, juicy_tile_number=None, fit=None, bins_to_fit=-1)
                 xs, f(xs, a), marker="+", color="r", label="beta-binomial fixed mean"
             )
 
-        ax.set(title=plot_title, xlabel="variants per sample", yscale="log")
+        ax.set(
+            title=plot_title,
+            xlabel="variants per sample",
+            ylabel="frequency",
+            yscale="log",
+        )
         bottom, top = ax.get_ylim()  # to avoid axes being f*cked by the Poisson fit
 
         if fit == "Poisson" or fit == "all":
@@ -901,13 +906,14 @@ def plot_juicy_hist(save=True, juicy_tile_number=None, fit=None, bins_to_fit=-1)
             plt.show()
 
 
-def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True):
+def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True, mega_fit=True):
     """Plots histograms of the positions I've found that I want to plot."""
     found_means_df = pd.read_csv(
         file_names["found means"] + "\\{}_to_{}.csv".format(lower, upper)
     )
     fig, axs = plt.subplots(4, 3, figsize=(16, 20))
     for variant, ax in zip(VARIANTS, axs.flatten()):
+        print(variant)
 
         # for i, juicy_row in juicy_df.iterrows():
         #     juicy_data_df = tile_data_df(juicy_row["tile"])
@@ -923,15 +929,16 @@ def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True):
                 found_means_df.loc[found_means_df["variant"] == variant]
                 .sample()
                 .iloc[0]
-            )
-            print(found_row)  # for added confusion, this is actually a df
+            )  # for added confusion, this is actually a df
+            context = found_row["context"]
+            print(context)
 
             df = tile_data_df(int(found_row["tile number"]))
             df = df.loc[
                 (df["position"] == int(found_row["position"]))
                 & (df["variant"] == variant)
             ]
-            print(found_row["chromosome"])
+
             plot_title = "chr {}, position {}, {}".format(
                 found_row["chromosome"], int(found_row["position"]), variant
             )
@@ -963,6 +970,27 @@ def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True):
                 edgecolor="k",
             )
             xs = np.arange(maximum + 1)
+            ax.set(
+                title=plot_title,
+                xlabel="variants per sample",
+                ylabel="frequency",
+                yscale="log",
+            )
+            # try:
+            if mega_fit and variant == "AC":
+                beta_df = pd.read_csv(data_location + "\\beta.csv")
+                beta_row = beta_df.loc[beta_df["context"] == context].iloc[0]
+                alpha = beta_row.at["alpha"]
+                beta = beta_row.at["beta"]
+                print(alpha)
+                print(beta)
+
+                def f(x, a, b):
+                    return betabinom.pmf(x, n, a, b) * N
+
+                ax.plot(
+                    xs, f(xs, alpha, beta), marker="+", color="blue", label="mega-bb",
+                )
 
             if fit == "beta-binomial" or fit == "both beta-binomial" or fit == "all":
 
@@ -1002,9 +1030,10 @@ def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True):
                     color="r",
                     label="beta-binomial fixed mean",
                 )
-
-            ax.set(title=plot_title, xlabel="variants per sample", yscale="log")
-            bottom, top = ax.get_ylim()  # to avoid axes being f*cked by the Poisson fit
+            (
+                bottom,
+                top,
+            ) = ax.get_ylim()  # to avoid axes being f*cked by the Poisson fit
 
             if fit == "Poisson" or fit == "all":
 
@@ -1029,7 +1058,9 @@ def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True):
             ax.set_xticks(np.arange(bins[-1] + 1))
 
             ax.legend()
-
+            # except Exception:
+            #     print("job's fucked")
+            #     continue
         # def func(x):
         #     return betabinom.pmf(x, n, a, b) * N - 1
 
@@ -1044,11 +1075,12 @@ def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True):
     if save:
         location = "plots\\found_plots\\"
         file_name = "found_plots_{}_to_{}".format(lower, upper)
-        fig.savefig(location + file_name + ".png", dpi=600)
+        # fig.savefig(location + file_name + ".png", dpi=600)
         fig.savefig(location + file_name + ".svg", dpi=1200)
         fig.savefig(location + file_name + ".eps", dpi=1200)
     else:
         plt.show()
+    plt.close()
 
 
 def plot_hist_mean_by_tile(
@@ -1533,3 +1565,102 @@ def plot_hist_D_by_position(
     else:
         plt.show()
     plt.close("all")
+
+
+def mega_bb(bins_to_fit=None, save=True):
+    beta_df = pd.DataFrame()
+    for variant in VARIANTS:
+        # fig, ax = plt.subplots(4, 4, figsize=(20, 22))
+        for context in variant_contexts_map[variant]:
+            fig, ax = plt.subplots()
+            print(variant + " " + context)
+            context_df = pd.DataFrame()
+            for tile_number in tile_df.index:
+                # print(tile_number)
+                df = tile_data_df(tile_number)
+                if not df.empty:
+                    context_df = context_df.append(
+                        df.loc[df["context"] == context], ignore_index=True
+                    )
+
+            if not context_df.empty:
+
+                df = context_df  # to reuse below code to save time
+                df = df.loc[df["downsample"] <= 100]
+
+                plot_title = "{} {}".format(variant, context)
+
+                n = 6348
+                N = len(df.index)  # To adjust normalisation of distributions
+                print("N = {}".format(N))
+                mean = np.mean(df["downsample"])
+                print(mean)
+
+                maximum = np.amax(df["downsample"])
+                bins = np.arange(-0.5, maximum + 1.5)
+                hs, hs_bin_edges = np.histogram(df["downsample"], bins)
+                if bins_to_fit is None:
+                    bins_to_fit = len(bins)
+
+                ax.hist(
+                    df["downsample"],
+                    bins=bins[: bins_to_fit + 1],
+                    color="green",
+                    linestyle="-",
+                    edgecolor="k",
+                )
+                ax.hist(
+                    df["downsample"],
+                    bins=bins[bins_to_fit:],
+                    color="c",
+                    linestyle="-",
+                    edgecolor="k",
+                )
+                xs = np.arange(maximum + 1)
+                ax.set(
+                    title=plot_title,
+                    xlabel="variants per sample",
+                    ylabel="frequency",
+                    yscale="log",
+                )
+                try:
+
+                    def f(x, a, b):
+                        return betabinom.pmf(x, n, a, b) * N
+
+                    (a, b), pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+                    fit_mean = betabinom.mean(n, a, b)
+                    print("fit mean: {}".format(fit_mean))
+                    fit_var = betabinom.var(n, a, b)
+                    print("fit variance: {}".format(fit_var))
+
+                    ax.plot(
+                        xs, f(xs, a, b), marker="+", color="k", label="beta-binomial",
+                    )
+                    beta_df = beta_df.append(
+                        {
+                            "variant": variant,
+                            "context": context,
+                            "alpha": a,
+                            "beta": b,
+                        },
+                        ignore_index=True,
+                    )
+
+                    ax.legend()
+                except Exception:
+                    print("job's fucked")
+                    continue
+
+                if save:
+                    print("saving...")
+                    location = "plots\\mega_plots\\"
+                    file_name = "mega_plot_{}_{}".format(variant, context)
+                    fig.savefig(location + file_name + ".png", dpi=600)
+                    fig.savefig(location + file_name + ".svg", dpi=1200)
+                    fig.savefig(location + file_name + ".eps", dpi=1200)
+                else:
+                    plt.show()
+                plt.close()
+        beta_df.to_csv(data_location + "\\beta.csv")
+
