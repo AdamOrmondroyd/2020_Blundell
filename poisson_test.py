@@ -1623,34 +1623,48 @@ def mega_bb(bins_to_fit=None, save=True):
                     ylabel="frequency",
                     yscale="log",
                 )
-                try:
 
-                    def f(x, a, b):
-                        return betabinom.pmf(x, n, a, b) * N
+                def f(x, a, b):
+                    return betabinom.pmf(x, n, a, b) * N
 
-                    (a, b), pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
-                    fit_mean = betabinom.mean(n, a, b)
-                    print("fit mean: {}".format(fit_mean))
-                    fit_var = betabinom.var(n, a, b)
-                    print("fit variance: {}".format(fit_var))
+                (a, b), pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+                fit_mean = betabinom.mean(n, a, b)
+                print("fit mean: {}".format(fit_mean))
+                fit_var = betabinom.var(n, a, b)
+                print("fit variance: {}".format(fit_var))
 
-                    ax.plot(
-                        xs, f(xs, a, b), marker="+", color="k", label="beta-binomial",
-                    )
-                    beta_df = beta_df.append(
-                        {
-                            "variant": variant,
-                            "context": context,
-                            "alpha": a,
-                            "beta": b,
-                        },
-                        ignore_index=True,
-                    )
+                ax.plot(
+                    xs, f(xs, a, b), marker="+", color="k", label="beta-binomial",
+                )
 
-                    ax.legend()
-                except Exception:
-                    print("job's fucked")
-                    continue
+                def log_f(x, a, b):
+                    return np.log10(betabinom.pmf(x, n, a, b) * N)
+
+                # log_a and log_b just mean they were fit in log space, not actually the logarithms
+                (log_a, log_b), pcov = curve_fit(
+                    log_f, xs[:bins_to_fit], np.log10(hs[:bins_to_fit])
+                )
+                ax.plot(
+                    xs,
+                    f(xs, log_a, log_b),
+                    marker="+",
+                    color="blue",
+                    label="beta-binomial (log space)",
+                )
+
+                beta_df = beta_df.append(
+                    {
+                        "variant": variant,
+                        "context": context,
+                        "alpha": a,
+                        "beta": b,
+                        "log alpha": log_a,
+                        "log beta": log_b,
+                    },
+                    ignore_index=True,
+                )
+
+                ax.legend()
 
                 if save:
                     print("saving...")
