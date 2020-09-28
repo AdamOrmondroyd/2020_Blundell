@@ -459,7 +459,7 @@ def read_genome():
     tile_df.to_csv(file_names["Caroline tiles sorted"], sep="\t")
 
 
-def variants_per_position(threshold=1000):
+def look_for_juicy_positions(threshold=1000):
     """Spits out locations with juicy number of variants above threshold."""
     juicy_df = pd.DataFrame(
         columns=["tile", "chromosome", "position", "variant", "downsample"]
@@ -481,7 +481,7 @@ def variants_per_position(threshold=1000):
     juicy_df.to_csv(file_names["juicy tiles"])
 
 
-def look_for_juicy_positions():
+def actual_differences():
     """Looks in the juicy locations to find actual genetic differences between people."""
     for j, juicy_row in juicy_df.iterrows():
         df = tile_data_df(juicy_row["tile"])
