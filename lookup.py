@@ -481,7 +481,7 @@ def variants_per_position(threshold=1000):
     juicy_df.to_csv(file_names["juicy tiles"])
 
 
-def actual_differences():
+def look_for_juicy_positions():
     """Looks in the juicy locations to find actual genetic differences between people."""
     for j, juicy_row in juicy_df.iterrows():
         df = tile_data_df(juicy_row["tile"])

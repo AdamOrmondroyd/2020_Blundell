@@ -867,9 +867,6 @@ def plot_juicy_hist(save=True, juicy_tile_number=None, fit=None, bins_to_fit=-1)
 
         if fit == "Poisson" or fit == "all":
 
-            def f(x, λ):
-                return poisson.pmf(x, λ) * N
-
             λ, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
             ys = f(xs, λ)
             ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
@@ -1664,6 +1661,37 @@ def mega_bb(bins_to_fit=None, save=True):
                     ignore_index=True,
                 )
 
+                (
+                    bottom,
+                    top,
+                ) = ax.get_ylim()  # to avoid axes being f*cked by the Poisson fit
+
+                def f(x, λ):
+                    return poisson.pmf(x, λ) * N
+
+                λ, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
+                ys = f(xs, λ)
+                print(ys)
+                ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
+
+                def log_f(x, λ):
+                    return np.log10(poisson.pmf(x, λ) * N)
+
+                log_λ, pcov = curve_fit(
+                    log_f, xs[:bins_to_fit], np.log10(hs[:bins_to_fit])
+                )
+                ax.plot(
+                    xs,
+                    f(xs, log_λ),
+                    marker="+",
+                    color="magenta",
+                    label="Poisson (log space)",
+                )
+
+                ax.set_ylim(
+                    bottom, top
+                )  # to avoid axes being f*cked by the Poisson fit
+                ax.set_xticks(np.arange(bins[-1] + 1))
                 ax.legend()
 
                 if save:
