@@ -1444,7 +1444,6 @@ def plot_hist_D_by_position(
     xscale="log",
     yscale="log",
     cutoff_percentile=100,
-    show_zeros=True,
 ):
     """Plots histogram of the means for each position."""
     if yscale == "log":
@@ -1501,8 +1500,6 @@ def plot_hist_D_by_position(
                     [pos_max_mean, neg_max_mean], cutoff_percentile
                 )
                 max_var = np.percentile([pos_max_var, neg_max_var], cutoff_percentile)
-                print(max_mean)
-                print(max_var)
 
         # throw away all elements for mean=0 so I can calculate D = σ²/μ
         pos_non_zero_means = pos_means[pos_means.nonzero()]
@@ -1513,11 +1510,13 @@ def plot_hist_D_by_position(
         neg_non_zero_vars = neg_vars[neg_means.nonzero()]
         neg_Ds = neg_non_zero_vars / neg_non_zero_means
 
+        mean_D = np.mean(np.append(pos_Ds, neg_Ds))
+
         n_bins = 100
 
         Ds = np.append(pos_Ds, neg_Ds)
         bins = np.logspace(np.log10(np.amin(Ds[Ds > 0])), np.log10(np.amax(Ds)), n_bins)
-        print("min D: {}".format(np.amin(Ds)))
+
         n, bins, patches = ax.hist(
             [pos_Ds, neg_Ds],
             bins=bins,
@@ -1526,7 +1525,6 @@ def plot_hist_D_by_position(
             color=["blue", "orange"],
             label=["+ Ds", "- Ds"],
         )
-        print(bins)
 
         ax_title = "{} means".format(variant)
         if trim_and_flip:
@@ -1537,7 +1535,7 @@ def plot_hist_D_by_position(
             ax_title += " {}".format(chromosome)
 
         ax.set(
-            title=variant,
+            title="{}, mean D = {:.2f}".format(variant, mean_D),
             xlabel=r"$D = \frac{\sigma ^2}{\mu}$",
             ylabel="frequency",
             xscale=xscale,
@@ -1559,6 +1557,7 @@ def plot_hist_D_by_position(
             file_name += "_{}".format(chromosome)
         fig.savefig(location + file_name + ".png", dpi=600)
         fig.savefig(location + file_name + ".svg", dpi=1200)
+        fig.savefig(location + file_name + ".eps", dpi=1200)
     else:
         plt.show()
     plt.close("all")
