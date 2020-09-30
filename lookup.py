@@ -199,16 +199,15 @@ def tile_data_df(tile_number, group_by=None, trim_and_flip=True):
 def group_by_position(tile_number, trim_and_flip=True):
     """Groups the specified tile by position."""
     df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
+    if trim_and_flip:
+        columns_to_group = ["position", "chromosome", "variant", "context"]
+    else:
+        columns_to_group = ["position", "chromosome", "variant"]
+
     if not df.empty:
         df = df.drop(columns=["sample ID"])
-        temp_numbers_df = (
-            df.groupby(["position", "chromosome", "variant", "context"])
-            .size()
-            .reset_index()
-        )
-        df = df.groupby(["position", "chromosome", "variant", "context"]).agg(
-            aggregation_functions
-        )
+        temp_numbers_df = df.groupby(columns_to_group).size().reset_index()
+        df = df.groupby(columns_to_group).agg(aggregation_functions)
         df["num rows"] = np.array(
             temp_numbers_df[temp_numbers_df.columns[-1]].astype(float)
         )
@@ -259,7 +258,7 @@ def trim_and_flip(exon_number):
         return genome_string
 
     def context(tile_number, tile_data_df):
-        """Will think of an accurate description later."""
+        """Adds context to line of tile_data_df."""
 
         start = np.min(tile_data_df["position"])
         end = np.max(tile_data_df["position"])

@@ -148,7 +148,7 @@ def plot_all_mean_var(
             if var_against_mean:
                 fig, ax = plt.subplots()
             else:
-                fig, axs = plt.subplots(3, figsize=(8, 8))
+                fig, axs = plt.subplots(2, figsize=(8, 6))
 
             if chromosome == "all":
                 chrs_to_enumerate = chromosomes
@@ -217,15 +217,6 @@ def plot_all_mean_var(
                                     variances = variances[np.nonzero(means)]
                                     means = means[np.nonzero(means)]
 
-                                axs[2].plot(
-                                    xs,
-                                    variances / means,
-                                    label="index of dispersion",
-                                    marker=marker,
-                                    linestyle="None",
-                                    color=color,
-                                    **marker_style,
-                                )
                     else:
                         if group_chromosomes:
                             means, variances = mean_var(
@@ -275,14 +266,6 @@ def plot_all_mean_var(
                                 variances = variances[np.nonzero(means)]
                                 means = means[np.nonzero(means)]
 
-                            axs[2].plot(
-                                xs,
-                                variances / means,
-                                label="index of dispersion",
-                                marker=marker,
-                                linestyle="None",
-                                color=color,
-                            )
             if var_against_mean:
                 axs0_title = "{} var against mean".format(variant)
             else:
@@ -314,12 +297,6 @@ def plot_all_mean_var(
                 )
                 axs[1].set(
                     title="variances", xlabel="tile", ylabel="variance", yscale=yscale
-                )
-                axs[2].set(
-                    title="Index of dispersion",
-                    xlabel="tile",
-                    ylabel="D = Var/mean",
-                    yscale=yscale,
                 )
 
             fig.tight_layout()
