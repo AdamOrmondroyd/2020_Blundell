@@ -1091,7 +1091,7 @@ def plot_hist_mean_by_tile(
         for variant in VARIANTS:
             print(variant)
 
-            fig, axs = plt.subplots(3, figsize=(8, 8))
+            fig, axs = plt.subplots(2, figsize=(8, 6))
 
             if chromosome == "all":
                 chrs_to_use = chromosomes
@@ -1129,15 +1129,6 @@ def plot_hist_mean_by_tile(
                     max_var = np.percentile(
                         [pos_max_var, neg_max_var], cutoff_percentile
                     )
-
-            # throw away all elements for mean=0 so I can calculate D = σ²/μ
-            pos_non_zero_means = pos_means[pos_means.nonzero()]
-            pos_non_zero_vars = pos_vars[pos_means.nonzero()]
-            pos_Ds = pos_non_zero_vars / pos_non_zero_means
-
-            neg_non_zero_means = neg_means[neg_means.nonzero()]
-            neg_non_zero_vars = neg_vars[neg_means.nonzero()]
-            neg_Ds = neg_non_zero_vars / neg_non_zero_means
 
             n_bins = 100
 
@@ -1179,14 +1170,6 @@ def plot_hist_mean_by_tile(
                 color=["blue", "orange"],
                 label=["+ variances", "- variances"],
             )
-            axs[2].hist(
-                [pos_Ds, neg_Ds],
-                bins=int(np.amax(np.append(pos_Ds, neg_Ds))),
-                stacked=True,
-                log=log,
-                color=["blue", "orange"],
-                label=["+ Ds", "- Ds"],
-            )
 
             axs0_title = "{} means".format(variant)
             if context:
@@ -1207,12 +1190,7 @@ def plot_hist_mean_by_tile(
                 ylabel="frequency",
                 xscale=xscale,
             )
-            axs[2].set(
-                title=r"$D = \frac{\sigma^2}{\mu}$",
-                xlabel=r"$D$",
-                ylabel="frequency",
-                xscale=xscale,
-            )
+
             for ax in axs:
                 ax.set_ylim(bottom=10 ** -0.5)
                 ax.legend()
@@ -1232,6 +1210,7 @@ def plot_hist_mean_by_tile(
                     file_name += "_{}".format(chromosome)
                 fig.savefig(location + file_name + ".png", dpi=600)
                 fig.savefig(location + file_name + ".svg", dpi=1200)
+                fig.savefig(location + file_name + ".eps", dpi=1200)
             else:
                 plt.show()
             plt.close("all")
