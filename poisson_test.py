@@ -132,6 +132,7 @@ def plot_all_mean_var(
     show_exon_numbers=False,
     yscale="log",
     context=False,
+    to_use=False,
 ):
     """Plots the mean, variance and the index of dispersion for all tiles."""
     for variant in VARIANTS:
@@ -155,10 +156,10 @@ def plot_all_mean_var(
                 chrs_to_enumerate = chromosome
 
             for strand, color in zip(["+", "-"], ["blue", "orange"]):
-                for j, chromosome in enumerate(chrs_to_enumerate):
+                for j, chromo in enumerate(chrs_to_enumerate):
                     # print(j)
                     chr_tile_df = tile_df.loc[
-                        (tile_df["chromosome"] == chromosome)
+                        (tile_df["chromosome"] == chromo)
                         & (tile_df["strand"] == strand)
                     ]
                     if show_exon_numbers:
@@ -243,7 +244,7 @@ def plot_all_mean_var(
                         if show_strands:
                             marker = "${}$".format(strand)
                         else:
-                            marker = "${}$".format(chromosome)
+                            marker = "${}$".format(chromo)
 
                         if var_against_mean:
                             ax.plot(
@@ -330,6 +331,8 @@ def plot_all_mean_var(
                     location += "var_against_mean\\"
                 if context:
                     location += "context\\"
+                if to_use:
+                    location += "to_use\\"
 
                 file_name = "{}_mean_var".format(variant)
                 if context:
@@ -346,6 +349,7 @@ def plot_all_mean_var(
                     file_name += "_{}".format(chromosome)
                 fig.savefig(location + file_name + ".png", dpi=600)
                 fig.savefig(location + file_name + ".svg", dpi=1200)
+                fig.savefig(location + file_name + ".eps", dpi=1200)
             else:
                 plt.show()
             plt.close("all")
@@ -974,7 +978,7 @@ def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True, mega_fi
                 yscale="log",
             )
             # try:
-            if mega_fit and variant == "AC":
+            if mega_fit:
                 beta_df = pd.read_csv(data_location + "\\beta.csv")
                 beta_row = beta_df.loc[beta_df["context"] == context].iloc[0]
                 alpha = beta_row.at["alpha"]
@@ -986,7 +990,11 @@ def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True, mega_fi
                     return betabinom.pmf(x, n, a, b) * N
 
                 ax.plot(
-                    xs, f(xs, alpha, beta), marker="+", color="blue", label="mega-bb",
+                    xs,
+                    f(xs, alpha, beta),
+                    marker="+",
+                    color="blue",
+                    label="context bb",
                 )
 
             if fit == "beta-binomial" or fit == "both beta-binomial" or fit == "all":
@@ -1073,8 +1081,8 @@ def plot_found_hist(lower, upper, fit=None, bins_to_fit=None, save=True, mega_fi
         location = "plots\\found_plots\\"
         file_name = "found_plots_{}_to_{}".format(lower, upper)
         # fig.savefig(location + file_name + ".png", dpi=600)
-        fig.savefig(location + file_name + ".svg", dpi=1200)
-        fig.savefig(location + file_name + ".eps", dpi=1200)
+        fig.savefig(location + file_name + ".svg", dpi=1200, bbox_inches="tight")
+        fig.savefig(location + file_name + ".eps", dpi=1200, bbox_inches="tight")
     else:
         plt.show()
     plt.close()
@@ -1690,7 +1698,7 @@ def mega_bb(bins_to_fit=None, save=True):
                 ax.set_ylim(
                     bottom, top
                 )  # to avoid axes being f*cked by the Poisson fit
-                ax.set_xticks(np.arange(bins[-1] + 1))
+                # ax.set_xticks(np.arange(bins[-1] + 1))
                 ax.legend()
 
                 if save:
