@@ -217,17 +217,6 @@ def group_by_position(tile_number, trim_and_flip=True):
         df.to_csv(file_names["tile group positions"].format(tile_number))
 
 
-def group_by_ID(tile_number, trim_and_flip=True):
-    """Groups the specified tile by ID (person and age)."""
-    df = tile_data_df(tile_number, trim_and_flip=trim_and_flip)
-    df = df.drop(columns=["position"])
-    df = df.groupby(["sample ID", "chromosome", "variant"]).agg(aggregation_functions)
-    if trim_and_flip:
-        df.to_csv(file_names["tile group IDs t&f"].format(tile_number))
-    else:
-        df.to_csv(file_names["tile group IDs"].format(tile_number))
-
-
 def trim_and_flip(exon_number):
     """
     Flips neg data to be what the actual change was.
@@ -326,13 +315,6 @@ def group_by_position_wrapper(trim_and_flip=True):
         print(i)
 
 
-def group_by_ID_wrapper(trim_and_flip=True):
-    """Repeats group by ID for all tiles."""
-    for i in np.arange(0, 1063):
-        group_by_ID(i, trim_and_flip)
-        print(i)
-
-
 def separating_tiles_wrapper():
     """Separates tiles in chunks of 100 to avoid memory issues."""
     print("Separating tiles 0 to 99")
@@ -378,14 +360,10 @@ def refresh_data(redownsample=False, just_trim_and_flip=False):
         if redownsample:
             downsample()
             separating_tiles_wrapper()
-        print("Grouping by ID")
-        group_by_ID_wrapper(trim_and_flip=False)
         print("Grouping by position")
         group_by_position_wrapper(trim_and_flip=False)
     print("Trimming and flipping")
     trim_and_flip_wrapper()
-    print("Grouping by ID (t&f)")
-    group_by_ID_wrapper()
     print("Grouping by position (t&f)")
     group_by_position_wrapper()
 
