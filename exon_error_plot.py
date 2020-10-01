@@ -48,6 +48,14 @@ def exon_error_plot(
 
             axs = axs.flatten()
             for j, ax in enumerate(axs):
+                axtwin = ax.twinx()
+                axtwin.plot(
+                    df["position"],
+                    df["num consensus molecules"],
+                    label="consensus",
+                    color="black",
+                    alpha=0.25,
+                )
                 for i, variant in enumerate(base_variants_map[base]):
                     if (3 == j) or (i == j):
                         color = variant_color_map[variant]
@@ -86,14 +94,6 @@ def exon_error_plot(
                 else:
                     ax.set(xlabel="position", ylabel="error rate", yscale="log")
 
-                axtwin = ax.twinx()
-                axtwin.plot(
-                    df["position"],
-                    df["num consensus molecules"],
-                    label="consensus",
-                    color="black",
-                    alpha=0.25,
-                )
                 axtwin.set(ylabel="number of consensus molecules")
 
                 if show_tiles:
