@@ -107,11 +107,13 @@ def exon_error_plot(
             axs[-1].legend(
                 bbox_to_anchor=(0.3, 1.1), loc="upper left", frameon=False, ncol=3
             )
-
+            super_title = "{} (chr{}) {} {}".format(
+                plot_title, exon["chromosome"], strands, base
+            )
+            if trim_and_flip:
+                super_title += " t&f"
             fig.suptitle(
-                "{} {} {} {}".format(exon["chromosome"], plot_title, strands, base),
-                size=16,
-                y=0.5,
+                super_title, size=16, y=0.5,
             )
             fig.subplots_adjust(top=0.8)
             fig.tight_layout()
@@ -126,8 +128,9 @@ def exon_error_plot(
                     )
                 if trim_and_flip:
                     file_name += "_t&f"
-                fig.savefig(file_name + ".png")
+                fig.savefig(file_name + ".png", dpi=600)
                 fig.savefig(file_name + ".svg", dpi=1200)
+                fig.savefig(file_name + ".eps", dpi=1200)
         if not save:
             plt.show()
 
