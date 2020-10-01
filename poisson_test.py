@@ -1602,7 +1602,9 @@ def mega_bb(bins_to_fit=None, save=True):
 
                 # log_a and log_b just mean they were fit in log space, not actually the logarithms
                 (log_a, log_b), pcov = curve_fit(
-                    log_f, xs[:bins_to_fit], np.log10(hs[:bins_to_fit])
+                    log_f,
+                    xs[np.nonzero(hs[:bins_to_fit])],
+                    np.log10(hs[np.nonzero(hs[:bins_to_fit])]),
                 )
                 ax.plot(
                     xs,
@@ -1634,15 +1636,18 @@ def mega_bb(bins_to_fit=None, save=True):
 
                 λ, pcov = curve_fit(f, xs[:bins_to_fit], hs[:bins_to_fit])
                 ys = f(xs, λ)
-                print(ys)
+
                 ax.plot(xs, ys, marker="+", color="xkcd:puke green", label="Poisson")
 
                 def log_f(x, λ):
                     return np.log10(poisson.pmf(x, λ) * N)
 
                 log_λ, pcov = curve_fit(
-                    log_f, xs[:bins_to_fit], np.log10(hs[:bins_to_fit])
+                    log_f,
+                    xs[np.nonzero(hs[:bins_to_fit])],
+                    np.log10(hs[np.nonzero(hs[:bins_to_fit])]),
                 )
+
                 ax.plot(
                     xs,
                     f(xs, log_λ),
